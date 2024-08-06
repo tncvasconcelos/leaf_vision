@@ -1,5 +1,12 @@
-
+# rm(list=ls())
+library(ggplot2)
 setwd("/Users/tvasc/Desktop/leaf_computer_vision")
+
+# If local
+path="TWDG/wgsrpd-master/level3/level3.shp"
+#-----------------------------
+twgd_data <- maptools::readShapeSpatial(path)
+twgd_data01 <- sf::st_as_sf(twgd_data)
 
 #-----------------------------
 # Load WCVP dataset
@@ -11,12 +18,11 @@ names_sample <- read.table("wcvp/wcvp_names.txt", sep="|", header=TRUE, quote = 
 all_vars <- merge(dist_sample, names_sample, by="plant_name_id")
 all_vars <- subset(all_vars, all_vars$taxon_rank=="Species")
 all_vars <- subset(all_vars, all_vars$taxon_status=="Accepted")
-unique_species <- unique(all_vars$taxon_name)
 
 #-----------------------------
 all_available_data <- read.csv("available_data.csv")
 all_available_data <- subset(all_available_data, !is.na(all_available_data$V2))
-all_available_data <- subset(all_available_data, all_available_data$V2 > 5)
+all_available_data <- subset(all_available_data, all_available_data$V2 >= 5)
 
 #-----------------------------
 # Finding out how much of each area has photos of specimens available
@@ -31,5 +37,29 @@ for(area_index in 1:length(all_areas)) {
   prop_sample[area_index,3] <- round((length(sp_available)) / (length(sp_rich0)),3)
 }
 
+# hist(prop_sample$prop_available_sample, breaks=50)
+twgd_data_plants <- merge(twgd_data01, prop_sample, by.x="LEVEL3_COD", by.y="area_code")
+
+# Angiosperm plot
+tmp_map_plants <- ggplot(data = twgd_data_plants) +
+  geom_sf(aes(fill = prop_available_sample)) +
+  scale_fill_viridis_c(option = "C", alpha=0.9, name="proportion sampled") +
+  theme_classic() 
+#  coord_sf(ylim = c(-60, 90), xlim = c(-170, 0), expand = FALSE)
+
+#prop_sample$area_code
+
+
+
+#------------------------
+prop_sample <- 0.005
+#prop_sample <- as.data.frame(matrix(nrow=length(all_areas), ncol=3))
+#colnames(prop_sample) <- c("area_code","sp_rich","prop_available_sample")
+for(area_index in 1:length(all_areas)) {
+  sp_rich0 <- all_vars$taxon_name[all_vars$area_code_l3 == all_areas[area_index]]
+  s <- sample(all_available_data$V1, round(prop_sample * length(sp_rich0)))
+
+  
+}
 
 

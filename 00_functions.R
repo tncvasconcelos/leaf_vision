@@ -58,4 +58,71 @@ download.image <- function(url, destfile) {
 }
 
 
+FilterWCVP_genus <- function(points, all_vars, twgd_data, lon="decimalLongitude", lat="decimalLatitude") {
+  npoints_start <- nrow(points)
+  tmp_points = as.data.frame(points)
+  colnames(tmp_points)[colnames(tmp_points)==lon] <- "x"
+  colnames(tmp_points)[colnames(tmp_points)==lat] <- "y"
+  tmp_points = subset(tmp_points, !is.na(tmp_points$x))
+  tmp_points = subset(tmp_points, !is.na(tmp_points$y))
+  # Load shape files and make sure they have the same name as the WCVP column with the TDWG areas
+  #twgd_data <- suppressWarnings(maptools::readShapeSpatial(path))
+  dubiousGBIF_ids <- c()
+  
+  wcvp_subset <- subset(all_vars, all_vars$genus %in% tmp_points$genus)
+  wcvp_subset <- subset(wcvp_subset, wcvp_subset$introduced==0)
+  wcvp_subset <- subset(wcvp_subset, wcvp_subset$extinct==0)
+  wcvp_subset <- subset(wcvp_subset, wcvp_subset$location_doubtful==0)
+  occ_areas <- wcvp_subset$area_code_l3
+  area_plus_buffer <- twgd_data[which(as.character(twgd_data$LEVEL3_COD) %in% occ_areas),]
+  if(nrow(area_plus_buffer)>0) {
+    coords <- tmp_points[,c("x","y")]
+    sp::coordinates(coords) <- ~ x + y
+    answer <- which(is.na(sp::over(coords, area_plus_buffer)[,3]))
+    if(length(answer) != 0) {
+      dubiousGBIF_ids <- as.character(tmp_points$gbifID[answer])
+    }
+  }  
+  cleaned_points <- subset(points, !as.character(points$gbifID) %in% dubiousGBIF_ids)
+  npoints_end <- nrow(cleaned_points)
+  print(paste0(npoints_start - npoints_end, " points removed."))
+  return(cleaned_points)
+}
+
+
+FilterWCVP <- function(points, all_vars, reference_table, twgd_data, species= "scientificName", lon="decimalLongitude", lat="decimalLatitude") {
+  npoints_start <- nrow(points)
+  tmp_points = as.data.frame(points)
+  colnames(tmp_points)[colnames(tmp_points)==lon] <- "x"
+  colnames(tmp_points)[colnames(tmp_points)==lat] <- "y"
+  tmp_points = subset(tmp_points, !is.na(tmp_points$x))
+  tmp_points = subset(tmp_points, !is.na(tmp_points$y))
+  # Load shape files and make sure they have the same name as the WCVP column with the TDWG areas
+  #twgd_data <- suppressWarnings(maptools::readShapeSpatial(path))
+  dubiousGBIF_ids <- c()
+  for(species_index in 1:nrow(reference_table)) {
+    gbif_subset <- subset(tmp_points, tmp_points$scientificName == reference_table$gbif_name[species_index])
+    if(nrow(gbif_subset)!=0) {
+      wcvp_subset <- subset(all_vars, all_vars$taxon_name == reference_table$wcvp_name[species_index])
+      wcvp_subset <- subset(wcvp_subset, wcvp_subset$introduced==0)
+      wcvp_subset <- subset(wcvp_subset, wcvp_subset$extinct==0)
+      wcvp_subset <- subset(wcvp_subset, wcvp_subset$location_doubtful==0)
+      occ_areas <- wcvp_subset$area_code_l3
+      area_plus_buffer <- twgd_data[which(as.character(twgd_data$LEVEL3_COD) %in% occ_areas),]
+      if(nrow(area_plus_buffer)>0) {
+        coords <- gbif_subset[,c("x","y")]
+        sp::coordinates(coords) <- ~ x + y
+        answer <- which(is.na(sp::over(coords, area_plus_buffer)[,3]))
+        if(length(answer) != 0) {
+          dubiousGBIF_ids <- c(dubiousGBIF_ids, as.character(gbif_subset$gbifID[answer]))
+        }
+      }
+    }
+    cat(species_index, "\r")
+  }
+  cleaned_points <- subset(points, !as.character(points$gbifID) %in% dubiousGBIF_ids)
+  npoints_end <- nrow(cleaned_points)
+  print(paste0(npoints_start - npoints_end, " points removed."))
+  return(cleaned_points)
+}
 
