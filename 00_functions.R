@@ -1,5 +1,10 @@
 library(taxize)
 library(ape)
+library(rgbif)
+library(rvest)
+library(httr)
+library(dplyr)
+library(tidyr)
 
 resolve.names <- function(names_to_solve) {
   gnr_resolve_x <- function(x) {
@@ -45,6 +50,8 @@ full.herb.search <- function(species_name) {
     metadata$license <- media_info[[1]]$license
   }
   cat("Search for", species_name, "done!", "\n")
+  metadata <- subset(metadata, metadata$basisOfRecord=="PRESERVED_SPECIMEN")
+  metadata <- subset(metadata, !grepl("inaturalist",metadata$media_url))
   return(metadata)
 }
 

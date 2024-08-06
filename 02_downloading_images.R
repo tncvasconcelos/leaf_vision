@@ -60,15 +60,19 @@ for(species_index in 1:length(all_species_to_sample)) {
       # Downloading images
       # Loop through the URLs and download the images
     # argument changes for download format
+      
       for (i in seq_along(metadata$media_url)) {
         file_name <- paste0("virtual_herbarium/", 
                             paste0(gsub(" ","_",metadata$species[i]),"_",metadata$year[i],"_", metadata$key[i],".jpeg"))
         Sys.sleep(2)
         download.image(metadata$media_url[i], file_name)
         # resize?
-        img <- image_read(file_name)
-        image_write(img, file_name, quality = 10)
-        cat("resized","\n")
+        try(try_img <- image_read(file_name))
+        if(exists("try_img")) {
+          image_write(try_img, file_name, quality = 10)
+          cat("resized","\n")
+          remove("try_img")
+        } 
       }
     }
 }
