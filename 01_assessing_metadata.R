@@ -1,28 +1,15 @@
 # Downloading images and records from GBIF
+# rm(list=ls())
 # setwd("/Users/tvasc/Desktop/leaf_computer_vision")
 source("00_functions.R")
 
-# # Produce list of species to search:
-# #-----------------------------
-# # Load WCVP dataset
-# dist_sample <- read.table("wcvp/wcvp_distribution.txt", sep="|", header=TRUE, quote = "", fill=TRUE, encoding = "UTF-8")
-# names_sample <- read.table("wcvp/wcvp_names.txt", sep="|", header=TRUE, quote = "", fill=TRUE, encoding = "UTF-8")
-# 
-# #-----------------------------
-# # Merge them in one big table
-# all_vars <- merge(dist_sample, names_sample, by="plant_name_id")
-# all_vars <- subset(all_vars, all_vars$taxon_rank=="Species")
-# all_vars <- subset(all_vars, all_vars$taxon_status=="Accepted")
-# unique_species <- unique(all_vars$taxon_name)
-# write.csv(unique_species, file="species_to_search.csv", row.names = F)
-
+#-----------------------------
 # Let's look at the metadata first
 unique_species <- read.csv("species_to_search.csv")
 # ----------------------------------
 
+test <- full.herb.search(unique_species$x[1])
 
-
-all_names <- pbapply::pblapply(unique_species, gnr_resolve_x, cl=6)
 
 
 # For a full download:
@@ -40,22 +27,14 @@ all_names <- pbapply::pblapply(unique_species, gnr_resolve_x, cl=6)
 #   }
 # }
 
-#----------------------------------
-full.herb.search_par <- function(names_to_search) {
-  name_search_x <- function(x) {
-    metadata <- NULL
-    try(metadata <- full.herb.search(x), silent=T)
-    if(is.null(metadata)) {
-      metadata <- paste0(x,"_download_fail")
-    }
-    write.csv(metadata, file=paste0("metadata/", x, "_mvh_metadata.csv"), row.names=F)
-    return(metadata)
-  }
-  all_names <- pbapply::pblapply(names_to_search, name_search_x, cl=6)
-  return(as.list(all_names))
-}
 
-test<-full.herb.search_par(unique_species$x[1:1000])
+
+name_search_x <- function(x,download_metadata,download_specimens,resize) {
+  metadata <- tryCatch({full.herb.search.metadata(x)}, error = function(e) {return(e$message)})
+  return(metadata)
+  
+
+which(unlist(lapply(lapply(test,"[[",1), is.character)))
 
 
 # de-duplicating a little with available information

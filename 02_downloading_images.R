@@ -30,7 +30,7 @@ all_available_data <- subset(all_available_data, all_available_data$V2 >= 5)
 all_species_to_sample <- all_available_data$V1
 for(species_index in 1:length(all_species_to_sample)) { 
   metadata <- NULL
-  try(metadata <- full.herb.search(all_species_to_sample[species_index]), silent=T)
+  try(metadata <- full.herb.search.metadata(all_species_to_sample[species_index]), silent=T)
   if(!is.null(metadata)) {
     #--------------------------------------
     # Filtering dataset little before downloading
@@ -65,7 +65,7 @@ for(species_index in 1:length(all_species_to_sample)) {
         file_name <- paste0("virtual_herbarium/", 
                             paste0(gsub(" ","_",metadata$species[i]),"_",metadata$year[i],"_", metadata$key[i],".jpeg"))
         Sys.sleep(2)
-        download.image(metadata$media_url[i], file_name)
+        download.herb.image(metadata$media_url[i], file_name)
         # resize?
         try(try_img <- image_read(file_name))
         if(exists("try_img")) {

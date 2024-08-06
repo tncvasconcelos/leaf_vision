@@ -5,40 +5,16 @@ library(rvest)
 library(httr)
 library(dplyr)
 library(tidyr)
+library(magick)
 
-resolve.names <- function(names_to_solve) {
-  gnr_resolve_x <- function(x) {
-    sources <- taxize::gnr_datasources()
-    tmp.name <- suppressWarnings(taxize::gnr_resolve(names=x, data_source_ids=sources$id[sources$title == "GBIF Backbone Taxonomy"], best_match_only=TRUE)$matched_name)
-    if(is.null(tmp.name)) {
-      tmp.name <- paste0(x,"_UNMATCHED")
-    }
-    return(tmp.name)
-  }
-  all_names <- pbapply::pblapply(names_to_solve, gnr_resolve_x, cl=6)
-  return(as.character(all_names))
-}
-
-load.trees <- function(tree.dir) {
-  tree_files <- list.files(tree.dir, full.names = T)
-  all_trees <- list()
-  for(i in 1:length(tree_files)) {
-    load(tree_files[i])
-    if(exists("one_tree")) {
-      all_trees[[i]] <- one_tree
-      names(all_trees)[i] <- gsub(paste0(c(paste0(tree.dir,"/"), ".Rsave"), collapse="|"),"", tree_files[i])
-      rm("one_tree")
-    }
-  }
-  return(all_trees)
-}
-
-#
-full.herb.search <- function(species_name) {
+########################################
+# mvh functions
+########################################
+full.herb.search.metadata <- function(species_name) {
   #--------------------------------------
   # Search GBIF for records with images
+  Sys.sleep(2)
   all_gbif_data <- occ_search(scientificName = species_name , mediaType = "StillImage")
-  
   #--------------------------------------
   # Extract URL and licence types
   metadata <- as.data.frame(all_gbif_data$data)
@@ -56,7 +32,7 @@ full.herb.search <- function(species_name) {
 }
 
 # Function to download images
-download.image <- function(url, destfile) {
+download.herb.image <- function(url, destfile) {
   tryCatch({
     download.file(url, destfile, mode = "wb")
   }, error = function(e) {
@@ -64,7 +40,37 @@ download.image <- function(url, destfile) {
   })
 }
 
+#----------------------------------
+full.herb.search <- function(names_to_search, download_metadata=T, download_specimens=T, resize=T, n_cores=6) {
+    metadata <- tryCatch({full.herb.search.metadata(x)}, error = function(e) {return(e$message)})
+    if(download_metadata) {
+      # cdd code to create a medatata folder first
+      write.csv(metadata, file=paste0("metadata/", x, "_mvh_metadata.csv"), row.names=F)
+    }
+    if(download_specimens) {
+      for (i in seq_along(metadata$media_url)) {
+        file_name <- paste0("virtual_herbarium/", 
+                            paste0(gsub(" ","_",metadata$species[i]),"_", metadata$key[i],".jpeg"))
+        Sys.sleep(2)
+        download.herb.image(metadata$media_url[i], file_name)
+        # resize?
+        if(resize) {
+          try(try_img <- image_read(file_name))
+          if(exists("try_img")) {
+            image_write(try_img, file_name, quality = 20)
+            cat("resized","\n")
+            remove("try_img")
+          }
+        } 
+      }
+    }
+  return(metadata)
+}
 
+
+########################################
+# Functions to filter data
+########################################
 FilterWCVP_genus <- function(points, all_vars, twgd_data, lon="decimalLongitude", lat="decimalLatitude") {
   npoints_start <- nrow(points)
   tmp_points = as.data.frame(points)
