@@ -5,12 +5,47 @@ source("00_functions.R")
 
 #-----------------------------
 # Let's look at the metadata first
-unique_species <- read.csv("species_to_search.csv")
+woody_species <- read.csv("supporting_datasets/woody_species.csv")
 # ----------------------------------
 
-test <- full.herb.search(unique_species$x[1])
+
+sample_species <- sample(woody_species$taxon_name, 100)
+
+name_search_x <- function(x) {
+  metadata <- tryCatch({full.herb.search.metadata(x)}, error = function(e) {return(e$message)})
+  write.csv(metadata, file=paste0("metadata/", x, "_mvh_metadata.csv"), row.names=F)
+  return(metadata)
+}
+
+metadata <- pbapply::pblapply(sample_species, name_search_x)
+
+all_media_links <- matrix(nrow=0, ncol=3)
+for(i in 1:length(metadata)) {
+  one_result <- metadata[[i]]
+  if(class(one_result)=="data.frame"){
+    all_media_links <- rbind(all_media_links, one_result[,c("species","key","media_url")])
+  }
+}
+
+n_specimens <- 100
+while(length(list.files("virtual_herbarium")) < n_specimens) {
+  image_to_sample <- sample(1:nrow(all_media_links), 1)
+  file_name <- paste0("virtual_herbarium/", 
+                      paste0(gsub(" ","_",all_media_links$species[image_to_sample]),"_", all_media_links$key[image_to_sample],".jpeg"))
+  Sys.sleep(2)
+  try(download.herb.image(all_media_links$media_url[image_to_sample], file_name))
+  try(try_img <- image_read(file_name))
+  if(exists("try_img")) {
+    image_write(try_img, file_name, quality = 20)
+    cat("resized","\n")
+    remove("try_img")
+  }
+}
+  
 
 
+
+?image_write
 
 # For a full download:
 # download_fail <- c()
@@ -29,10 +64,7 @@ test <- full.herb.search(unique_species$x[1])
 
 
 
-name_search_x <- function(x,download_metadata,download_specimens,resize) {
-  metadata <- tryCatch({full.herb.search.metadata(x)}, error = function(e) {return(e$message)})
-  return(metadata)
-  
+
 
 which(unlist(lapply(lapply(test,"[[",1), is.character)))
 

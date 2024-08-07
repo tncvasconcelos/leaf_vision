@@ -10,6 +10,7 @@ library(magick)
 ########################################
 # mvh functions
 ########################################
+
 full.herb.search.metadata <- function(species_name) {
   #--------------------------------------
   # Search GBIF for records with images
@@ -22,10 +23,12 @@ full.herb.search.metadata <- function(species_name) {
   metadata$license <- NA
   for(obs_index in 1:nrow(metadata)) {
     media_info <- all_gbif_data$media[[obs_index]][[1]]
-    metadata$media_url[obs_index] <- media_info[[1]]$identifier
-    metadata$license <- media_info[[1]]$license
+    if("identifier" %in% names(media_info[[1]])) {
+      metadata$media_url[obs_index] <- media_info[[1]]$identifier
+      metadata$license <- media_info[[1]]$license
+    }
   }
-  cat("Search for", species_name, "done!", "\n")
+  #cat("Search for", species_name, "done!", "\n")
   metadata <- subset(metadata, metadata$basisOfRecord=="PRESERVED_SPECIMEN")
   metadata <- subset(metadata, !grepl("inaturalist",metadata$media_url))
   return(metadata)
@@ -42,10 +45,10 @@ download.herb.image <- function(url, destfile) {
 
 #----------------------------------
 full.herb.search <- function(names_to_search, download_metadata=T, download_specimens=T, resize=T, n_cores=6) {
-    metadata <- tryCatch({full.herb.search.metadata(x)}, error = function(e) {return(e$message)})
+    metadata <- tryCatch({full.herb.search.metadata(names_to_search)}, error = function(e) {return(e$message)})
     if(download_metadata) {
       # cdd code to create a medatata folder first
-      write.csv(metadata, file=paste0("metadata/", x, "_mvh_metadata.csv"), row.names=F)
+      write.csv(metadata, file=paste0("metadata/", names_to_search, "_mvh_metadata.csv"), row.names=F)
     }
     if(download_specimens) {
       for (i in seq_along(metadata$media_url)) {
@@ -139,3 +142,36 @@ FilterWCVP <- function(points, all_vars, reference_table, twgd_data, species= "s
   return(cleaned_points)
 }
 
+resize.image <- function(image_path, min_megapixels = 20, max_megapixels = 25) {
+  # Load the image
+  img <- image_read(image_path)
+  
+  # Get the current dimensions of the image
+  current_width <- image_info(img)$width
+  current_height <- image_info(img)$height
+  
+  # Calculate the current megapixels
+  current_megapixels <- (current_width * current_height) / 1e6
+  
+  # Check if the current megapixels are already within the desired range
+  if (current_megapixels >= min_megapixels && current_megapixels <= max_megapixels) {
+    return(img)
+  }
+  
+  # Calculate the scaling factor needed to get within the desired megapixel range
+  scaling_factor <- sqrt(min_megapixels / current_megapixels)
+  scaled_width <- round(current_width * scaling_factor)
+  scaled_height <- round(current_height * scaling_factor)
+  
+  # Ensure the scaled image is not too large
+  if (scaled_width * scaled_height / 1e6 > max_megapixels) {
+    scaling_factor <- sqrt(max_megapixels / current_megapixels)
+    scaled_width <- round(current_width * scaling_factor)
+    scaled_height <- round(current_height * scaling_factor)
+  }
+  
+  # Resize the image
+  resized_img <- image_resize(img, geometry_size_pixels(scaled_width, scaled_height, preserve_aspect = TRUE))
+  
+  return(resized_img)
+}
