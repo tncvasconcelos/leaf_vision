@@ -15,7 +15,7 @@ full.herb.search.metadata <- function(species_name) {
   #--------------------------------------
   # Search GBIF for records with images
   Sys.sleep(2)
-  all_gbif_data <- occ_search(scientificName = species_name , mediaType = "StillImage")
+  all_gbif_data <- occ_search(scientificName = species_name , mediaType = "StillImage", basisOfRecord="PRESERVED_SPECIMEN")
   #--------------------------------------
   # Extract URL and licence types
   metadata <- as.data.frame(all_gbif_data$data)
@@ -33,6 +33,8 @@ full.herb.search.metadata <- function(species_name) {
   metadata <- subset(metadata, !grepl("inaturalist",metadata$media_url))
   return(metadata)
 }
+
+
 
 # Function to download images
 download.herb.image <- function(url, destfile) {
@@ -142,9 +144,9 @@ FilterWCVP <- function(points, all_vars, reference_table, twgd_data, species= "s
   return(cleaned_points)
 }
 
-resize.image <- function(image_path, min_megapixels = 20, max_megapixels = 25) {
+resize.image <- function(file_name, min_megapixels = 20, max_megapixels = 25) {
   # Load the image
-  img <- image_read(image_path)
+  img <- image_read(file_name)
   
   # Get the current dimensions of the image
   current_width <- image_info(img)$width

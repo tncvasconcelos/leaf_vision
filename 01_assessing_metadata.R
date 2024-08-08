@@ -8,7 +8,6 @@ source("00_functions.R")
 woody_species <- read.csv("supporting_datasets/woody_species.csv")
 # ----------------------------------
 
-
 sample_species <- sample(woody_species$taxon_name, 100)
 
 name_search_x <- function(x) {
@@ -27,25 +26,35 @@ for(i in 1:length(metadata)) {
   }
 }
 
-n_specimens <- 100
+n_specimens <- 150
 while(length(list.files("virtual_herbarium")) < n_specimens) {
   image_to_sample <- sample(1:nrow(all_media_links), 1)
   file_name <- paste0("virtual_herbarium/", 
                       paste0(gsub(" ","_",all_media_links$species[image_to_sample]),"_", all_media_links$key[image_to_sample],".jpeg"))
   Sys.sleep(2)
   try(download.herb.image(all_media_links$media_url[image_to_sample], file_name))
-  try(try_img <- image_read(file_name))
+  try(try_img <- resize.image(file_name))
   if(exists("try_img")) {
-    image_write(try_img, file_name, quality = 20)
+    image_write(try_img, file_name)
     cat("resized","\n")
     remove("try_img")
   }
 }
-  
+
+
+# Another way of resizing them:
+# for(i in 1:length(list.files("virtual_herbarium"))) {
+#   file_name <- list.files("virtual_herbarium", full.names = T)[i]
+#   try(try_img <- image_read(file_name))
+#   if(exists("try_img")) {
+#     image_write(try_img, file_name, quality = 75)
+#     cat("resized","\n")
+#     remove("try_img")
+#   }
+# }
 
 
 
-?image_write
 
 # For a full download:
 # download_fail <- c()
@@ -64,9 +73,6 @@ while(length(list.files("virtual_herbarium")) < n_specimens) {
 
 
 
-
-
-which(unlist(lapply(lapply(test,"[[",1), is.character)))
 
 
 # de-duplicating a little with available information
