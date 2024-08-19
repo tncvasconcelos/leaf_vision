@@ -31,5 +31,7 @@ for(i in 1:length(life_forms$lifeform_description)) {
   cat(i, "\r")
 }
 woody_species <- subset(life_forms, life_forms$life_form=="woody perennial")
-woody_species <- woody_species[,c(11:27,31:36)]
+woody_species <- woody_species[,c(11:27,31:36)] # keep only relevant columns
+woody_species <- subset(woody_species, !grepl(" × ", woody_species$taxon_name)) # remove hybrids
+
 write.csv(woody_species, file="supporting_datasets/woody_species.csv", row.names = F)
