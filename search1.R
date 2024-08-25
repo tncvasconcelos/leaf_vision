@@ -8,7 +8,6 @@ species_to_sample <- read.csv("supporting_datasets/prelim_taxa_sample.csv")[,2]
 load("supporting_datasets/ref_table.Rsave")
 taxized_names <- unique(ref_table[,1][ref_table$newick_names %in% species_to_sample])
 
-
 for(i in 1:length(taxized_names[1:100])) {
   metadata <- search_specimen_metadata(taxon_name=taxized_names[i], limit=100, hasCoordinate=T)
   # Removing duplicates based on coordinates
@@ -25,9 +24,10 @@ for(i in 1:length(taxized_names[1:100])) {
     metadata$preference_score <- metadata$preference_score - ifelse(grepl("urn:catalog:MO:Tropicos", metadata$identifier), 1000, 0)
     # NYBG scores higher
     metadata$preference_score <- metadata$preference_score + ifelse(metadata$institutionCode%in%"NY", 1000, 0)
-    # BRI and NSW score lower (low res)
+    # BRI,NSW and RBGE score lower (low res)
     metadata$preference_score <- metadata$preference_score - ifelse(metadata$institutionCode%in%"NSW", 1000, 0)
     metadata$preference_score <- metadata$preference_score - ifelse(metadata$institutionCode%in%"BRI", 1000, 0)
+    metadata$preference_score <- metadata$preference_score - ifelse(metadata$institutionCode%in%"RBGE", 1000, 0)
     # Sort by preference score (higher is better)
     metadata <- metadata[order(metadata$preference_score,decreasing=T), ]
     # Sample up to 5 rows from the sorted data.frame

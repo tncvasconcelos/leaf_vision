@@ -1,8 +1,0 @@
-"scientificName","gbifID","institutionCode","eventDate","country","license","rightsHolder","filesize","status","error_message"
-"Casearia javitensis Kunth","4079377739","JBRJ","2023-01-28","Brazil","http://creativecommons.org/licenses/by/4.0/legalcode","Rio de Janeiro Botanical Garden",13127032,"succeeded",NA
-"Casearia javitensis Kunth","4537176785","JBRJ","2023-11-22","Brazil","http://creativecommons.org/licenses/by/4.0/legalcode","Rio de Janeiro Botanical Garden",11427848,"succeeded",NA
-"Casearia javitensis Kunth","4412571354","JBRJ","2022-08-28","Brazil","http://creativecommons.org/licenses/by/4.0/legalcode","Rio de Janeiro Botanical Garden",13260950,"succeeded",NA
-"Casearia javitensis Kunth","4109990390","JBRJ","2022-09-20","Brazil","http://creativecommons.org/licenses/by/4.0/legalcode","Rio de Janeiro Botanical Garden",12982353,"succeeded",NA
-"Casearia javitensis Kunth","4900529014","ALCB","2022-11-11","Brazil","http://creativecommons.org/licenses/by/4.0/legalcode","ALCB",NA,"failed","Error in download.file(url, destfile) : 
-  cannot open URL 'http://jbrj-public.s3-sa-east-1.amazonaws.com/fsi/server?type=image&source=DZI/alcb/alcb/0/7/50/9/alcb00075009.dzi'
-"
