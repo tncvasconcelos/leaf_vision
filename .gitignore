@@ -57,3 +57,6 @@ old/
 virtual_herbarium_LM2/
 large_files/
 intermediate_datasets/
+data/LM2_MEASUREMENTS_CLEAN.csv
+virtual_herbarium_NPleafPaper/
+data/merged_dataset.csv/
