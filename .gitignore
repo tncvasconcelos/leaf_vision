@@ -59,6 +59,10 @@ large_files/
 intermediate_datasets/
 data/LM2_MEASUREMENTS_CLEAN.csv
 virtual_herbarium_NPleafPaper/
+<<<<<<< HEAD
 data/merged_dataset.csv/
 layers/
 wc2-5/
+=======
+data/merged_dataset.csv
+>>>>>>> 0e60f84777e3c924ceee385535a863aefea23bd4

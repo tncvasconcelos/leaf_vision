@@ -1,4 +1,5 @@
 setwd("/Users/tvasc/Desktop/leaf_computer_vision")
+setwd("~/leaf_vision/")
 #rm(list=ls())
 library(data.table)
 
@@ -26,7 +27,7 @@ for(i in 1:nrow(merged_dataset)) {
   } else {
     merged_dataset$petiole_width[i] <- one_petiole / merged_dataset$predicted_conversion_factor_cm[i]
   }
-  cat(i, "\r")
+  cat(i, "of", nrow(merged_dataset), "\r")
 }
 
 write.csv(merged_dataset, file="data/merged_dataset.csv", row.names=F)
@@ -68,7 +69,7 @@ dev.off()
 merged_dataset$LMA <- NA
 for(i in 1:nrow(merged_dataset)) {
   merged_dataset$LMA[i] <- make_LMA(merged_dataset$area[i], merged_dataset$petiole_width[i])
-  cat(i, "\r")
+  cat(i, "of", nrow(merged_dataset), "\r")
 }
 
 write.csv(merged_dataset, file="data/merged_dataset.csv", row.names=F)
@@ -85,7 +86,7 @@ for(i in 1:nrow(lma_results)) {
 pdf("results/LMA_dist.pdf")
 hist(log(lma_results$mean_LMA), breaks=100, xlab="log(LMA)", main="LMA distribution")
 dev.off()
-write.csv(lma_results, file="lma_results.csv", row.names=F)
+write.csv(lma_results, file="data/lma_results.csv", row.names=F)
 
 # merged_dataset <- subset(merged_dataset, !merged_dataset$petiole_width %in% tail(sort(merged_dataset$petiole_width), n=1000))
 # merged_dataset <- subset(merged_dataset, !merged_dataset$petiole_width %in% head(sort(merged_dataset$petiole_width), n=1000))
