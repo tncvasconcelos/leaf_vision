@@ -125,8 +125,6 @@ write.csv(lma_results, file="data/lma_results.csv", row.names=F)
 # 
 # quantile(merged_dataset$petiole_width, probs = 0.75)
 
-
-### STILL WORKING HERE -- WILL MERGE METADATA TO GET LATS AND LONG ETC
 metadata <- list.files(path = "virtual_herbarium_NPleafPaper/metadata/", full.names = T)
 metadata <- lapply(metadata, read.csv)
 for(i in 1:length(metadata)) {
@@ -135,7 +133,16 @@ for(i in 1:length(metadata)) {
 }
 metadata <- do.call(rbind, metadata)
 
-grep(metadata$gbifID[1], lma_results$specimen[2])
+lma_results$lat <- NA
+lma_results$lon <- NA
+for(j in 1:nrow(metadata)) {
+  n_lma_result <- grep(metadata$gbifID[j], lma_results$specimen)
+  lma_results$lat[n_lma_result] <- metadata$decimalLatitude[j]
+  lma_results$lon[n_lma_result] <- metadata$decimalLongitude[j]
+  cat(j, "\r")
+}
 
+#plot(log(lma_results$mean_LMA)~lma_results$lat)
+write.csv(lma_results, file="lma_results.csv", row.names=F)
 
 
