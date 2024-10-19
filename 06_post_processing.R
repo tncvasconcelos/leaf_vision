@@ -75,16 +75,48 @@ for(i in 1:nrow(merged_dataset)) {
 write.csv(merged_dataset, file="data/merged_dataset.csv", row.names=F)
 
 # Create a mean LMA for each specimen 
-
-lma_results <- data.frame(specimen=unique(merged_dataset$filename), mean_LMA=NA)
-for(i in 1:nrow(lma_results)) {
-  one_specimen <- subset(merged_dataset, merged_dataset$filename==lma_results$specimen[i])
-  lma_results$mean_LMA[i] <- mean(one_specimen$LMA)
-  cat(i, "\r")
+merged_dataset <- fread("data/merged_dataset.csv")
+spp <- unique(merged_dataset$genus_species)
+merged_dataset$to_rm_lma <- 0
+merged_dataset$to_rm_wdth <- 0
+merged_dataset$to_rm_area <- 0
+for(i in seq_along(spp)){
+  cat("\r", i, "of", length(spp))
+  tmp <- merged_dataset[merged_dataset$genus_species == spp[i],]
+  to_rm <- tmp$component_id[abs((mean(log(tmp$LMA)) - 
+      log(tmp$LMA))/sd(log(tmp$LMA))) > 3]
+  if(length(to_rm) >= 1 & nrow(tmp) > 1){
+    merged_dataset$to_rm_lma[match(to_rm, merged_dataset$component_id)] <- 1
+  }
+  to_rm <- tmp$component_id[abs((mean(log(tmp$petiole_width)) - 
+      log(tmp$petiole_width))/sd(log(tmp$petiole_width))) > 3]
+  if(length(to_rm) >= 1 & nrow(tmp) > 1){
+    merged_dataset$to_rm_wdth[match(to_rm, merged_dataset$component_id)] <- 1
+  }
+  to_rm <- tmp$component_id[abs((mean(log(tmp$area)) - 
+      log(tmp$area))/sd(log(tmp$area))) > 3]
+  if(length(to_rm) >= 1 & nrow(tmp) > 1){
+    merged_dataset$to_rm_area[match(to_rm, merged_dataset$component_id)] <- 1
+  }
 }
 
+merged_dataset <- merged_dataset[rowSums(merged_dataset[,65:67]) == 0,]
+
+lma_results <- aggregate(merged_dataset$LMA, list(merged_dataset$genus_species), 
+  FUN = function(x) c(mean(log(x)), sd(log(x))/length(x)))
+lma_results <- data.frame(sp = lma_results$Group.1,
+  lma = lma_results$x[,1],
+  se =  lma_results$x[,2])
+
+# 
+# for(i in 1:nrow(lma_results)) {
+#   one_specimen <- subset(merged_dataset, merged_dataset$filename==lma_results$specimen[i])
+#   lma_results$mean_LMA[i] <- mean(one_specimen$LMA)
+#   cat(i, "\r")
+# }
+
 pdf("results/LMA_dist.pdf")
-hist(log(lma_results$mean_LMA), breaks=100, xlab="log(LMA)", main="LMA distribution")
+hist(lma_results$lma, breaks=100, xlab="log(LMA)", main="LMA distribution")
 dev.off()
 write.csv(lma_results, file="data/lma_results.csv", row.names=F)
 
