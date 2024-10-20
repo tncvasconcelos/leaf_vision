@@ -199,8 +199,8 @@ merged_dataset <- cbind(merged_dataset,coordinates)
 merged_dataset <- subset(merged_dataset, merged_dataset$lat!=0 & merged_dataset$lat!=0)
 write.csv(merged_dataset, file="data/merged_dataset.csv", row.names=F)
 
-# plot(log(merged_dataset$LMA)~log(merged_dataset$bio12))
-# test <- lm(log(merged_dataset$LMA)~log(merged_dataset$bio12))
+# plot(log(merged_dataset$area)~log(merged_dataset$bio12))
+# test <- lm(log(merged_dataset$area)~log(merged_dataset$bio12))
 # summary(test)
 # abline(test, col="red")
 
