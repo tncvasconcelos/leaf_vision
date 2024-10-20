@@ -30,7 +30,8 @@ localityToBiome <- function (points, lat="lat",lon="lon") {
   return(points)
 }
 
-lma_results <- read.csv("lma_results.csv")
+
+lma_results <- fread("data/lma_results.csv")
 lma_results <- subset(lma_results, !is.na(lma_results$lon))
 
 #---------------------------------
