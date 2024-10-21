@@ -41,9 +41,20 @@ summary(all_fits[[2]])
 
 myPalette <- brewer.pal("YlGnBu", n = 10)
 asr <- fastAnc(phy, lm_dat)
+node_vals <- c(setNames(dat$x, 1:Ntip(phy)), asr)
+edge_vals <- c()
+for(i in 1:nrow(phy$edge)){
+  focal_edge <- phy$edge[i,]
+  edge_vals <- c(edge_vals, mean(node_vals[focal_edge]))
+}
 
 plot.phylo(phy, show.tip.label = FALSE, no.margin = TRUE, direction = "upwards", y.lim=c(0, H*1.1))
 for(i in seq_along(plot_tip_values)){
   segments(i, H*1.01, i, plot_tip_values[i])
 }
+
+
+
+
+
 
