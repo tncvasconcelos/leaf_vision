@@ -62,3 +62,7 @@ virtual_herbarium_NPleafPaper/
 data/merged_dataset.csv
 layers/
 wc2-5/
+supporting_datasets/list_metadata_complete.Rsave
+supporting_datasets/filtered_list.Rsave
+climate/
+elevation/

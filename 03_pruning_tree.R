@@ -1,4 +1,4 @@
-# Making tree at genus level
+# Pruning tree to match list of species with 10 imaged specimens with valid coordinates
 big_tree <- readRDS("supporting_datasets/taxized_GBMB.Rdata")
 big_tree$tip.label <- unname(big_tree$tip.label)
 

@@ -10,8 +10,9 @@ for(i in 1:length(woody_species)) {
   cat(i, "\r")
 }
 save(list_metadata, file="supporting_datasets/list_metadata_complete.Rsave")
+## NOTE: this file is too large to be committed and is on gitignore for now.
 
-#load("list_metadata_54915.Rsave")
+#load("supporting_datasets/list_metadata_complete.Rsave")
 nrows <- c()
 taxa_to_analyze <- c()
 for(i in 1:length(list_metadata)) {

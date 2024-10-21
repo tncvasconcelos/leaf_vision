@@ -17,8 +17,11 @@ names_sample <- read.table("wcvp/wcvp_names.txt", sep="|", header=TRUE, quote = 
 all_vars <- merge(dist_sample, names_sample, by="plant_name_id")
 all_vars <- subset(all_vars, all_vars$taxon_rank=="Species")
 all_vars <- subset(all_vars, all_vars$taxon_status=="Accepted")
+
 all_vars <- subset(all_vars, !all_vars$family%in%families_to_exclude$families_to_exclude)
 
+#length(unique(all_vars$taxon_name))
+#length(unique(all_vars$family))
 #-----------------------------
 # Filter to get just woody eudicots
 life_form_scoring <- rbind(life_form_scoring, c("",""))
