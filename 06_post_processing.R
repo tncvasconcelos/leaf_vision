@@ -210,7 +210,7 @@ all_vars <- merge(dist_sample, names_sample, by="plant_name_id")
 # Looking at the POWO table and TDWG to clean occurrence points
 path="wcvp/wgsrpd-master/level3/level3.shp"
 twgd_data <- suppressWarnings(maptools::readShapeSpatial(path))
-merged_dataset <- read.csv(file="data/merged_dataset.csv")
+
 merged_dataset <- FilterWCVP_genus(points=merged_dataset, all_vars, twgd_data, lon="lon",lat="lat")
 
 #---------------------------------------
@@ -223,14 +223,18 @@ merged_dataset <- FilterWCVP_genus(points=merged_dataset, all_vars, twgd_data, l
 # Adding climate and biome data
 merged_dataset <- subset(merged_dataset, !is.na(merged_dataset$lon))
 merged_dataset <- subset(merged_dataset, !is.na(merged_dataset$lat))
-biomes_for_points <- localityToBiome(as.data.frame(merged_dataset), lat="lat",lon="lon")
-merged_dataset <- cbind(merged_dataset, biomes_for_points)
+merged_dataset <- localityToBiome(as.data.frame(merged_dataset), lat="lat",lon="lon")
 
 #---------------------------------------
 # Extracting climate, altitude and other things for each points
 bio <- worldclim_global(var="bio", res=2.5, version="2.1", path=getwd())# 19 worldclim vars
 names(bio) <- gsub("wc2.1_2.5m_","",names(bio))
-alt <- elevation_global(res=2.5, path=getwd())# altitude
+bio_clim <- list()
+for(i in 1:length(names(bio))){
+  bio_clim[[i]] <- raster(bio[[i]])
+  names(bio_clim)[i] <- names(bio)[i]
+}
+alt <- raster(elevation_global(res=2.5, path=getwd()))# altitude
 wind <- raster("layers/mean_wind.tif")
 srad <- raster("layers/mean_srad.tif")
 et0 <- raster("layers/et0_v3_yr.tif")
@@ -238,8 +242,8 @@ ai <- raster("layers/ai_v3_yr.tif")
 
 coordinates <- merged_dataset[,c("lat","lon")]
 points <- coordinates
-layers <- c(as.list(bio), alt, ai, npp, wind, srad, et0)
-names(layers) <- c(names(bio),"alt", "ai","npp","wind","srad","et0")
+layers <- c(bio_clim, alt, ai, wind, srad, et0)
+names(layers) <- c(names(bio_clim),"alt", "ai","wind","srad","et0")
 
 for(layer_index in 1:length(layers)) {
   layer <- layers[[layer_index]]
@@ -256,10 +260,9 @@ for(layer_index in 1:length(layers)) {
   coordinates <- cbind(coordinates, all_values)
   colnames(coordinates)[2+layer_index] <- names(layers)[layer_index]
 }
-merged_dataset <- cbind(merged_dataset,coordinates)
 
-# removing 0 coordinates because I didnt do this before, argh!
-merged_dataset <- subset(merged_dataset, merged_dataset$lat!=0 & merged_dataset$lat!=0)
+merged_dataset <- cbind(merged_dataset,coordinates[,3:ncol(coordinates)])
+
 
 #---------------------------------------
 # Save point
@@ -267,8 +270,8 @@ merged_dataset <- subset(merged_dataset, merged_dataset$lat!=0 & merged_dataset$
 # merged_dataset <- fread("data/merged_dataset.csv")
 #---------------------------------------
 
-# plot(cleaned_points$area~cleaned_points$srad)
-# test <- lm(cleaned_points$LMA~cleaned_points$srad)
+#plot(log(merged_dataset$area)~log(merged_dataset$))
+# test <- lm(merged_dataset$LMA~merged_dataset$srad)
 # summary(test)
 # abline(test, col="red")
 
@@ -285,10 +288,10 @@ lma_results <- data.frame(sp = lma_results$Group.1,
 #   cat(i, "\r")
 # }
 
-pdf("results/LMA_dist.pdf")
-hist(lma_results$lma, breaks=100, xlab="log(LMA)", main="LMA distribution")
-dev.off()
-write.csv(lma_results, file="data/lma_results.csv", row.names=F)
+# pdf("results/LMA_dist.pdf")
+# hist(lma_results$lma, breaks=100, xlab="log(LMA)", main="LMA distribution")
+# dev.off()
+# write.csv(lma_results, file="data/lma_results.csv", row.names=F)
 
 # merged_dataset <- subset(merged_dataset, !merged_dataset$petiole_width %in% tail(sort(merged_dataset$petiole_width), n=1000))
 # merged_dataset <- subset(merged_dataset, !merged_dataset$petiole_width %in% head(sort(merged_dataset$petiole_width), n=1000))
@@ -296,6 +299,6 @@ write.csv(lma_results, file="data/lma_results.csv", row.names=F)
 # quantile(merged_dataset$petiole_width, probs = 0.75)
 
 #plot(log(lma_results$mean_LMA)~lma_results$lat)
-write.csv(lma_results, file="lma_results.csv", row.names=F)
+#write.csv(lma_results, file="lma_results.csv", row.names=F)
 
 
