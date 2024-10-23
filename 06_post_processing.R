@@ -270,29 +270,77 @@ merged_dataset <- cbind(merged_dataset,coordinates[,3:ncol(coordinates)])
 # merged_dataset <- fread("data/merged_dataset.csv")
 #---------------------------------------
 
-#plot(log(merged_dataset$area)~log(merged_dataset$))
-# test <- lm(merged_dataset$LMA~merged_dataset$srad)
-# summary(test)
-# abline(test, col="red")
+#--------------------------------- 
+# By "super-biome":
+temperate <- c("Temperate Broadleaf & Mixed Forests", 
+               "Temperate Conifer Forests", 
+               "Temperate Grasslands, Savannas & Shrublands",
+               "Boreal Forests/Taiga",
+               "Montane Grasslands & Shrublands",
+               "Tundra")
+tropical <- c("Tropical & Subtropical Grasslands, Savannas & Shrubland", 
+              "Tropical & Subtropical Moist Broadleaf Forests", 
+              "Tropical & Subtropical Dry Broadleaf Forests", 
+              "Tropical & Subtropical Coniferous Forests",
+              "Mangroves")
+arid <- c("Mediterranean Forests, Woodlands & Scrub",
+          "Deserts & Xeric Shrublands")
+merged_dataset$super_biome <- NA
+for(i in 1:nrow(merged_dataset)) {
+  if(merged_dataset$biome[i] %in% temperate) {
+    merged_dataset$super_biome[i] <- "temperate"
+  } 
+  if(merged_dataset$biome[i] %in% tropical) {
+    merged_dataset$super_biome[i] <- "tropical"
+  }
+  if(merged_dataset$biome[i] %in% arid) {
+    merged_dataset$super_biome[i] <- "arid"
+  }
+  cat(i, "\r")
+}
 
-# 
-# for(i in 1:nrow(lma_results)) {
-#   one_specimen <- subset(merged_dataset, merged_dataset$filename==lma_results$specimen[i])
-#   lma_results$mean_LMA[i] <- mean(one_specimen$LMA)
-#   cat(i, "\r")
+############
+# By "likely to be decidious":
+likely_deciduous <- c("Temperate Broadleaf & Mixed Forests", 
+               "Temperate Conifer Forests", 
+               "Temperate Grasslands, Savannas & Shrublands",
+               "Boreal Forests/Taiga",
+               "Tundra",
+               "Tropical & Subtropical Dry Broadleaf Forests")
+likely_evergreen <- c("Tropical & Subtropical Grasslands, Savannas & Shrubland", 
+              "Tropical & Subtropical Moist Broadleaf Forests", 
+              "Tropical & Subtropical Coniferous Forests",
+              "Mangroves","Mediterranean Forests, Woodlands & Scrub",
+              "Deserts & Xeric Shrublands",
+              "Montane Grasslands & Shrublands")
+merged_dataset$deciduousness <- NA
+for(i in 1:nrow(merged_dataset)) {
+  if(merged_dataset$biome[i] %in% likely_deciduous) {
+    merged_dataset$deciduousness[i] <- "likely_deciduous"
+  } 
+  if(merged_dataset$biome[i] %in% likely_evergreen) {
+    merged_dataset$deciduousness[i] <- "likely_evergreen"
+  }
+  cat(i, "\r")
+}
+
+
+#---------------------------------------
+# Save point
+# write.csv(merged_dataset, file="data/merged_dataset.csv", row.names=F)
+# merged_dataset <- fread("data/merged_dataset.csv")
+#---------------------------------------
+
+# species_list <- unique(merged_dataset$genus_species)
+# results <- c()
+# for(i in 1:length(species_list)) {
+#   one_subset <- subset(merged_dataset, merged_dataset$genus_species==species_list[i])
+#   if(length(unique(one_subset$super_biome))>1) {
+#   one_subset$super_biome
+#    pp <-  as.data.frame(one_subset[, c("lat","lon")])
+#   sp::coordinates(pp) <- ~ lon + lat
+#   crs(pp) <- "+proj=longlat +datum=WGS84 +no_defs"
+#   points(pp)
+#   
+#   }
 # }
-
-# pdf("results/LMA_dist.pdf")
-# hist(lma_results$lma, breaks=100, xlab="log(LMA)", main="LMA distribution")
-# dev.off()
-# write.csv(lma_results, file="data/lma_results.csv", row.names=F)
-
-# merged_dataset <- subset(merged_dataset, !merged_dataset$petiole_width %in% tail(sort(merged_dataset$petiole_width), n=1000))
-# merged_dataset <- subset(merged_dataset, !merged_dataset$petiole_width %in% head(sort(merged_dataset$petiole_width), n=1000))
-# 
-# quantile(merged_dataset$petiole_width, probs = 0.75)
-
-#plot(log(lma_results$mean_LMA)~lma_results$lat)
-#write.csv(lma_results, file="lma_results.csv", row.names=F)
-
-
