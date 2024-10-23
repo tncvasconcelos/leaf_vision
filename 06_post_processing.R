@@ -275,12 +275,6 @@ merged_dataset <- cbind(merged_dataset,coordinates[,3:ncol(coordinates)])
 # summary(test)
 # abline(test, col="red")
 
-lma_results <- aggregate(merged_dataset$LMA, list(merged_dataset$genus_species), 
-  FUN = function(x) c(mean(log(x)), sd(log(x))/length(x)))
-lma_results <- data.frame(sp = lma_results$Group.1,
-  lma = lma_results$x[,1],
-  se =  lma_results$x[,2])
-
 # 
 # for(i in 1:nrow(lma_results)) {
 #   one_specimen <- subset(merged_dataset, merged_dataset$filename==lma_results$specimen[i])
