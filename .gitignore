@@ -66,3 +66,4 @@ supporting_datasets/list_metadata_complete.Rsave
 supporting_datasets/filtered_list.Rsave
 climate/
 elevation/
+data/merged_dataset_final.csv
