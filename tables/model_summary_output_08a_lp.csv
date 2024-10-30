@@ -1,0 +1,53 @@
+
+Call:
+model.avg(object = model_set, subset = delta < 2)
+
+Component model call: 
+phylolm(formula = la ~ <6 unique rhs>, data = data_subset, phy = phy, model = lambda, REML = FALSE)
+
+Component models: 
+                 df   logLik    AICc delta weight
+1+5+6+7+8+10      9 -1062.81 2143.86  0.00   0.25
+1+2+5+6+7+8+10   10 -1061.87 2144.04  0.18   0.23
+1+4+5+6+7+8+10   10 -1062.10 2144.49  0.64   0.18
+1+2+4+5+6+7+8+10 11 -1061.53 2145.43  1.57   0.12
+1+3+5+6+7+8+10   10 -1062.61 2145.52  1.67   0.11
+1+2+5+6+7+8+9+10 11 -1061.62 2145.60  1.75   0.11
+
+Term codes: 
+           ai           alt        bio_18        bio_19         bio_2         bio_3         bio_5 deciduousness 
+            1             2             3             4             5             6             7             8 
+         srad          wind 
+            9            10 
+
+Model-averaged coefficients:  
+(full average) 
+                         Estimate Std. Error z value Pr(>|z|)    
+(Intercept)             1.974e+00  6.042e-01   3.267 0.001086 ** 
+ai                      3.978e-05  9.939e-06   4.003 6.25e-05 ***
+bio_2                  -1.332e-01  2.431e-02   5.479  < 2e-16 ***
+bio_3                   1.093e-02  3.222e-03   3.393 0.000691 ***
+bio_5                   5.282e-02  1.638e-02   3.225 0.001261 ** 
+deciduousnessevergreen -4.709e-01  1.172e-01   4.018 5.86e-05 ***
+wind                   -1.692e-01  4.787e-02   3.534 0.000409 ***
+alt                     5.477e-05  8.707e-05   0.629 0.529340    
+bio_19                 -6.160e-05  1.445e-04   0.426 0.669859    
+bio_18                  1.368e-05  7.674e-05   0.178 0.858546    
+srad                   -1.914e-06  1.001e-05   0.191 0.848321    
+ 
+(conditional average) 
+                         Estimate Std. Error z value Pr(>|z|)    
+(Intercept)             1.974e+00  6.042e-01   3.267 0.001086 ** 
+ai                      3.978e-05  9.939e-06   4.003 6.25e-05 ***
+bio_2                  -1.332e-01  2.431e-02   5.479  < 2e-16 ***
+bio_3                   1.093e-02  3.222e-03   3.393 0.000691 ***
+bio_5                   5.282e-02  1.638e-02   3.225 0.001261 ** 
+deciduousnessevergreen -4.709e-01  1.172e-01   4.018 5.86e-05 ***
+wind                   -1.692e-01  4.787e-02   3.534 0.000409 ***
+alt                     1.210e-04  9.346e-05   1.295 0.195319    
+bio_19                 -2.055e-04  2.002e-04   1.026 0.304765    
+bio_18                  1.243e-04  1.994e-04   0.623 0.533153    
+srad                   -1.810e-05  2.558e-05   0.708 0.479245    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+

@@ -8,7 +8,8 @@ library(RColorBrewer)
 
 setwd("~/leaf_vision/")
 
-merged_dataset <- read.csv("data/merged_dataset.csv")
+merged_dataset <- read.csv("data/merged_dataset_final.csv")
+merged_dataset$genus_species <- gsub(" ", "_", merged_dataset$genus_species)
 tre <- read.tree("trees/GBMB.tre")
 
 la_results <- aggregate(merged_dataset$area, list(merged_dataset$genus_species), 
@@ -17,7 +18,11 @@ la_results <- data.frame(sp = la_results$Group.1,
   la = la_results$x[,1],
   se =  la_results$x[,2])
 
-merged_dataset_2 <- merged_dataset[!duplicated(merged_dataset$filename),]
+merged_dataset <- merged_dataset[!duplicated(merged_dataset$filename),]
+
+merged_dataset_2 <- merged_dataset[,!colnames(merged_dataset) == "super_biome"]
+merged_dataset_2 <- merged_dataset_2[,!colnames(merged_dataset_2) == "deciduousness"]
+merged_dataset_2 <- merged_dataset_2[,!colnames(merged_dataset_2) == "leaf_phenology"]
 focal_cols <- grep("bio_1$", colnames(merged_dataset_2)):ncol(merged_dataset_2)
 climate_data <- aggregate(merged_dataset_2[,focal_cols], list(merged_dataset_2$genus_species), 
   FUN = function(x) c(mean(x, na.rm=TRUE), sd(x, na.rm = TRUE)/length(na.omit(x))))
@@ -103,18 +108,16 @@ plot(pca_res, type = "l")
 cumsum(summary(pca_res)$importance[2, ])
 
 ## FULL PHYLO REGRESSION
-# Create a comparative data object
-# comp_data <- comparative.data(phy, dat[,c("sp", "la", reduced_vars)], 
-#   names.col = "sp", vcv = TRUE, na.omit = TRUE)
-
-# Full model with all predictors (after variable selection)
-# full_model <- pgls(lma ~ ., data = comp_data, lambda = "ML")
 data_subset <- dat[, c("la", reduced_vars)]
 formula_full <- as.formula(paste("la ~", paste(reduced_vars, collapse = " + ")))
-full_model <- phylolm(formula_full, phy = phy, data = dat, model = "lambda", REML = FALSE)
+full_model <- phylolm(formula_full, phy = phy, data = data_subset, model = "lambda", REML = FALSE)
 
 # Summary of the model
 summary(full_model)
+coef_summary <- summary(full_model)$coefficients
+saveRDS(full_model, file = "models/full_model_08a.rds")
+write.csv(coef_summary, file = "tables/model_coefficients_08a.csv", row.names = TRUE)
+
 
 ## DATA DREDGE REGRESSION
 # Load MuMIn package for model selection
@@ -122,6 +125,8 @@ library(MuMIn)
 
 # Perform model selection
 model_set <- dredge(full_model, trace = TRUE, rank = "AICc")
+saveRDS(model_set, file = "models/model_set_08a.rds")
+model_set <- readRDS(file = "models/model_set_08a.rds")
 
 # View the top models
 head(model_set)
@@ -132,6 +137,12 @@ avg_model <- model.avg(model_set, subset = delta < 2)
 
 # Summary of the averaged model
 summary(avg_model)
+model_summary_output <- capture.output(summary(avg_model))
+writeLines(model_summary_output, "tables/model_summary_output_08a.csv")
+
+coef_summary <- summary(avg_model)$coefficients
+write.csv(avg_model$msTable, file = "tables/model_fits_08a.csv", row.names = TRUE)
+write.csv(coef_summary, file = "tables/modelavg_coefficients_08a.csv", row.names = TRUE)
 
 ## VALIDATION
 residuals_phylolm <- residuals(full_model)
@@ -142,4 +153,64 @@ plot(fitted_values_phylolm, residuals_phylolm,
   main = "Residuals vs Fitted Values")
 abline(h = 0, col = "red")
 
+#### REPEAT FOR LEAF PHENOLOGY
+## FULL PHYLO REGRESSION
+# full_model <- pgls(lma ~ ., data = comp_data, lambda = "ML")
+deciduousness <- data.frame(sp = merged_dataset$genus_species, 
+  deciduousness = as.factor(merged_dataset$leaf_phenology))
+deciduousness <- deciduousness[!is.na(deciduousness$deciduousness),]
+deciduousness_df <- aggregate(deciduousness$deciduousness, by = list(deciduousness$sp), 
+  FUN = function(x) (table(factor(x, levels = levels(deciduousness$deciduousness)))))
+deciduousness_df <- as.data.frame(do.call(cbind, deciduousness_df))
+colnames(deciduousness_df) <- c("sp", levels(deciduousness$deciduousness))
+deciduousness_vec <- setNames(as.factor(levels(deciduousness$deciduousness)[apply(deciduousness_df[,-1], 1, which.max)]), deciduousness_df$sp)
+deciduousness_vec <- deciduousness_vec[phy$tip.label]
+data_subset <- dat[, c("la", reduced_vars)]
+data_subset$deciduousness <- deciduousness_vec
+phy <- drop.tip(phy, rownames(data_subset)[which(is.na(data_subset$deciduousness))])
+data_subset <- data_subset[!is.na(data_subset$deciduousness), ]
+formula_full <- as.formula(paste("la ~", paste(c(reduced_vars, "deciduousness"), collapse = " + ")))
+full_model <- phylolm(formula_full, phy = phy, data = data_subset, model = "lambda", REML = FALSE)
 
+aggregate(data_subset$la, by = list(data_subset$deciduousness), mean)
+
+# Summary of the model
+summary(full_model)
+coef_summary <- summary(full_model)$coefficients
+saveRDS(full_model, file = "models/full_model_08a_lp.rds")
+write.csv(coef_summary, file = "tables/model_coefficients_08a_lp.csv", row.names = TRUE)
+
+
+## DATA DREDGE REGRESSION
+# Load MuMIn package for model selection
+library(MuMIn)
+
+# Perform model selection
+model_set <- dredge(full_model, trace = TRUE, rank = "AICc")
+saveRDS(model_set, file = "models/model_set_08a_lp.rds")
+model_set <- readRDS(file = "models/model_set_08a_lp.rds")
+
+# View the top models
+head(model_set)
+
+## MODEL AVG REGRESSION
+# Model averaging of top models within 2 AICc units
+avg_model <- model.avg(model_set, subset = delta < 2)
+
+# Summary of the averaged model
+summary(avg_model)
+model_summary_output <- capture.output(summary(avg_model))
+writeLines(model_summary_output, "tables/model_summary_output_08a_lp.csv")
+
+coef_summary <- summary(avg_model)$coefficients
+write.csv(avg_model$msTable, file = "tables/model_fits_08a_lp.csv", row.names = TRUE)
+write.csv(coef_summary, file = "tables/modelavg_coefficients_08a_lp.csv", row.names = TRUE)
+
+## VALIDATION
+residuals_phylolm <- residuals(full_model)
+fitted_values_phylolm <- fitted(full_model)
+plot(fitted_values_phylolm, residuals_phylolm,
+  xlab = "Fitted Values",
+  ylab = "Residuals",
+  main = "Residuals vs Fitted Values")
+abline(h = 0, col = "red")
