@@ -66,3 +66,6 @@ supporting_datasets/list_metadata_complete.Rsave
 supporting_datasets/filtered_list.Rsave
 climate/
 elevation/
+data/old
+data/groundtruth_overlay/
+evergreen_deciduous/

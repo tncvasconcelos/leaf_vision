@@ -87,7 +87,7 @@ FilterWCVP_genus <- function(points, all_vars, twgd_data, lon="decimalLongitude"
 # Read Leaf Machine output
 all_measurements <- fread("data/LM2_MEASUREMENTS_CLEAN.csv") #this is on gitignore due to size
 # Read petiole width data
-petiole_measurements <- fread("data/width_data.csv")
+petiole_measurements <- fread("data/width_data_all_specimens_LM2.csv")
 # Merge datasets
 merged_dataset <- merge(all_measurements, petiole_measurements, by.x="component_name",by.y="filename")
 # remove NAs from area data
@@ -141,17 +141,21 @@ dev.off()
 # Transform petiole width and leaf area into LMA
 merged_dataset$LMA <- NA
 for(i in 1:nrow(merged_dataset)) {
-  merged_dataset$LMA[i] <- make_LMA(merged_dataset$area[i], merged_dataset$petiole_width[i])
+  one_subset <- subset(merged_dataset, merged_dataset$filename %in% merged_dataset$filename[i])
+  petiole_width_for_lma <- min(one_subset$petiole_width)
+  merged_dataset$LMA[i] <- make_LMA(merged_dataset$area[i], petiole_width_for_lma)
   cat(i, "of", nrow(merged_dataset), "\r")
 }
 
+#length(unique(merged_dataset$filename))
+
 #---------------------------------------
 # Save point
-# write.csv(merged_dataset, file="data/merged_dataset.csv", row.names=F)
-# merged_dataset <- fread("data/merged_dataset.csv")
+# write.csv(merged_dataset, file="data/merged_dataset2.csv", row.names=F)
+# merged_dataset <- fread("data/merged_dataset2.csv")
 #---------------------------------------
 
-# Create a mean LMA for each specimen 
+# check for per species outliers
 spp <- unique(merged_dataset$genus_species)
 merged_dataset$to_rm_lma <- 0
 merged_dataset$to_rm_wdth <- 0
@@ -175,31 +179,39 @@ for(i in seq_along(spp)){
     merged_dataset$to_rm_area[match(to_rm, merged_dataset$component_id)] <- 1
   }
 }
-merged_dataset <- merged_dataset[rowSums(merged_dataset[,65:67]) == 0,]
+to_rm_index <- grep("to_rm", colnames(merged_dataset))
+merged_dataset <- merged_dataset[rowSums(merged_dataset[,c(66,67,68)]) == 0,]
 
 #---------------------------------------
-# Adding latitude and longite from GBIF metadata
+# Adding latitude and longitude from GBIF metadata
 metadata <- list.files(path = "virtual_herbarium_NPleafPaper/metadata/", full.names = T)
 metadata <- lapply(metadata, read.csv)
 for(i in 1:length(metadata)) {
-  metadata[[i]] <- metadata[[i]][,c("gbifID","decimalLatitude","decimalLongitude")]
+  if(!"institutionCode" %in% colnames(metadata[[i]])) {
+    metadata[[i]]$institutionCode <- NA
+  }
+  metadata[[i]] <- metadata[[i]][,c("gbifID","decimalLatitude","decimalLongitude","institutionCode")]
   cat(i, "\r")
 }
 metadata <- do.call(rbind, metadata)
 
 merged_dataset$lat <- NA
 merged_dataset$lon <- NA
+merged_dataset$inst_code <- NA
 for(j in 1:nrow(metadata)) {
   n_lma_result <- grep(metadata$gbifID[j], merged_dataset$filename)
   merged_dataset$lat[n_lma_result] <- metadata$decimalLatitude[j]
   merged_dataset$lon[n_lma_result] <- metadata$decimalLongitude[j]
+  merged_dataset$inst_code[n_lma_result] <- metadata$institutionCode[j]
   cat(j, "\r")
 }
 
+#write.csv(table(merged_dataset$inst_code), file="inst_codes.csv")
+
 #---------------------------------------
 # Save point
-# write.csv(merged_dataset, file="data/merged_dataset.csv", row.names=F)
-# merged_dataset <- fread("data/merged_dataset.csv")
+# write.csv(merged_dataset, file="data/merged_dataset2.csv", row.names=F)
+# merged_dataset <- fread("data/merged_dataset2.csv")
 #---------------------------------------
 # Filtering wrong coordinates from POWO (also should've done this before)
 dist_sample <- read.table("wcvp/wcvp_distribution.txt", sep="|", header=TRUE, quote = "", fill=TRUE, encoding = "UTF-8")
@@ -266,8 +278,8 @@ merged_dataset <- cbind(merged_dataset,coordinates[,3:ncol(coordinates)])
 
 #---------------------------------------
 # Save point
-# write.csv(merged_dataset, file="data/merged_dataset.csv", row.names=F)
-# merged_dataset <- fread("data/merged_dataset.csv")
+# write.csv(merged_dataset_test, file="data/merged_dataset.csv", row.names=F)
+# merged_dataset_original <- fread("data/old/merged_dataset.csv")
 #---------------------------------------
 
 #--------------------------------- 
@@ -327,7 +339,7 @@ for(i in 1:nrow(merged_dataset)) {
 
 #---------------------------------------
 # Save point
-# write.csv(merged_dataset, file="data/merged_dataset.csv", row.names=F)
+# write.csv(merged_dataset, file="data/merged_dataset_final.csv", row.names=F)
 # merged_dataset <- fread("data/merged_dataset.csv")
 #---------------------------------------
 
@@ -344,3 +356,84 @@ for(i in 1:nrow(merged_dataset)) {
 #   
 #   }
 # }
+
+
+
+#spot_check <- merged_dataset[,c("genus_species","biome","deciduousness")]
+#write.csv(spot_check, file="spot_check_deciduousness.csv", row.names=F)
+library(BIEN)
+library(data.table)
+# Data from BIEN:
+list_of_one_trait <- BIEN_trait_trait(trait="whole plant vegetative phenology")
+list_of_one_trait0 <- subset(list_of_one_trait, !is.na(list_of_one_trait$scrubbed_species_binomial))
+list_of_one_trait0 <- subset(list_of_one_trait0, list_of_one_trait0$access=="public")
+list_of_one_trait0 <- list_of_one_trait0[,c("scrubbed_species_binomial","trait_value")]
+
+# Other datasets:
+wright_dataset <- as.data.frame(fread("evergreen_deciduous/Wright-etal-2004-LES-supplemental.csv"))
+ajb_dataset <- as.data.frame(fread("evergreen_deciduous/ajb216419-sup-0001-appendixs1 (2).csv"))
+nph_dataset <- as.data.frame(fread("evergreen_deciduous/nph_3615_sm_tables1-7 (2).csv"))
+try_dataset <- as.data.frame(fread("evergreen_deciduous/36766.txt"))
+
+# curating AJB dataset
+all_ajb_names <- c()
+for(i in 1:length(ajb_dataset$Species)) {
+  all_ajb_names <- c(all_ajb_names, paste(unlist(strsplit(ajb_dataset$Species[i]," "))[1:2], collapse=" "))
+}
+ajb_dataset$Species <- all_ajb_names
+
+# curating TRY dataset
+try_dataset <- subset(try_dataset, try_dataset$DataName=="Leaf phenology type")
+try_dataset <- try_dataset[,c("AccSpeciesName","OrigValueStr")]
+#write.csv(names(table(try_dataset$OrigValueStr)),"evergreen_deciduous/standartizing_try.csv", row.names=F)
+standartizing_try <- read.csv("evergreen_deciduous/standartizing_try.csv")
+evergreen_ones <- standartizing_try$trait_name[which(standartizing_try$action=="evergreen")] 
+deciduous_ones <- standartizing_try$trait_name[which(standartizing_try$action=="deciduous")] 
+exclude_ones <- standartizing_try$trait_name[which(standartizing_try$action=="exclude")] 
+
+try_dataset$OrigValueStr[which(try_dataset$OrigValueStr%in%evergreen_ones)] <- "evergreen"
+try_dataset$OrigValueStr[which(try_dataset$OrigValueStr%in%deciduous_ones)] <- "deciduous"
+try_dataset$OrigValueStr[which(try_dataset$OrigValueStr%in%exclude_ones)] <- "exclude"
+
+try_dataset <- subset(try_dataset, try_dataset$OrigValueStr!="exclude")
+
+
+# Standartizing column names
+colnames(ajb_dataset) <- c("species","leaf_phenology")
+colnames(nph_dataset) <- c("species","leaf_phenology")
+colnames(wright_dataset) <- c("species","leaf_phenology")
+colnames(list_of_one_trait0) <- c("species","leaf_phenology")
+colnames(try_dataset) <- c("species","leaf_phenology")
+
+all_pheno_data <- rbind(list_of_one_trait0, ajb_dataset, nph_dataset, wright_dataset, try_dataset)
+all_pheno_data <- subset(all_pheno_data, all_pheno_data$leaf_phenology!="")
+all_pheno_data <- subset(all_pheno_data, !is.na(all_pheno_data$leaf_phenology))
+all_pheno_data <- subset(all_pheno_data, !duplicated(all_pheno_data$species))
+
+all_pheno_data$leaf_phenology[which(all_pheno_data$leaf_phenology=="evergreenergreen")] <- "evergreen"
+all_pheno_data <- subset(all_pheno_data, !is.na(all_pheno_data$leaf_phenology))
+all_pheno_data <- subset(all_pheno_data, all_pheno_data$leaf_phenology!="variable or conflicting reports")
+
+merged_dataset$genus_species <- gsub("_"," ",merged_dataset$genus_species)
+merged_dataset <- merge(as.data.frame(merged_dataset), all_pheno_data, by.x="genus_species",by.y="species",all.x=T)
+
+#spot_check <- subset(merged_dataset, !is.na(merged_dataset$leaf_phenology))
+#unique(spot_check$genus_species)
+
+
+#---------------------------------------
+# Save point
+# write.csv(merged_dataset, file="data/merged_dataset_final.csv", row.names=F)
+# merged_dataset <- fread("data/merged_dataset.csv")
+#---------------------------------------
+
+#boxplot(merged_dataset$LMA~merged_dataset$biome, las=2, horizontal=T)
+
+#boxplot(spot_check$LMA~spot_check$leaf_phenology)
+subset_to_check <- subset(merged_dataset, !duplicated(merged_dataset$genus_species))
+write.csv(subset_to_check[,c("genus_species","leaf_phenology")], file="subset_to_check.csv", row.names = F)
+
+
+# merged_dataset_original <- as.data.frame(merged_dataset_original)[,c(1,70:ncol(merged_dataset_original))]
+# merged_dataset_test <- merge(merged_dataset, merged_dataset_original, by="component_name", all=T)
+# merged_dataset_test <- subset(merged_dataset_test, !is.na(merged_dataset_test$bio_1))
