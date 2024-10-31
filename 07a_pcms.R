@@ -8,7 +8,7 @@ library(RColorBrewer)
 
 setwd("~/leaf_vision/")
 
-merged_dataset <- read.csv("data/merged_dataset_final.csv")
+merged_dataset <- read.csv("data/merged_dataset.csv")
 merged_dataset$genus_species <- gsub(" ", "_", merged_dataset$genus_species)
 tre <- read.tree("trees/GBMB.tre")
 
@@ -125,7 +125,7 @@ cumsum(summary(pca_res)$importance[2, ])
 # full_model <- pgls(lma ~ ., data = comp_data, lambda = "ML")
 data_subset <- dat[, c("lma", reduced_vars)]
 formula_full <- as.formula(paste("lma ~", paste(reduced_vars, collapse = " + ")))
-full_model <- phylolm(formula_full, phy = phy, data = data_subset, model = "lambda", REML = FALSE)
+full_model <- phylolm(formula_full, phy = phy, data = data_subset, model = "lambda")
 
 # Summary of the model
 summary(full_model)

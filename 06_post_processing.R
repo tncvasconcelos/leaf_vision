@@ -417,9 +417,11 @@ all_pheno_data <- subset(all_pheno_data, all_pheno_data$leaf_phenology!="variabl
 merged_dataset$genus_species <- gsub("_"," ",merged_dataset$genus_species)
 merged_dataset <- merge(as.data.frame(merged_dataset), all_pheno_data, by.x="genus_species",by.y="species",all.x=T)
 
+#max(merged_dataset$LMA)
+#which(is.na(merged_dataset$LMA))
+
 #spot_check <- subset(merged_dataset, !is.na(merged_dataset$leaf_phenology))
 #unique(spot_check$genus_species)
-
 
 #---------------------------------------
 # Save point
