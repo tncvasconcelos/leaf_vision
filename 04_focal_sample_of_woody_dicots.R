@@ -1,4 +1,6 @@
-setwd("~/leaf_vision/")
+# Creating phylogenetically balanced "random" sample of species
+# rm(list=ls())
+# setwd("~/leaf_computer_vision")
 
 library(ape)
 

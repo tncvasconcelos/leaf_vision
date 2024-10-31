@@ -1,9 +1,12 @@
-#---------------
 # Downloading herbarium specimens
+# rm(list=ls())
+# setwd("~/leaf_computer_vision")
+
 setwd("/Users/tvasc/Desktop/leaf_computer_vision")
 # rm(list=ls())
 library(mvh)
 
+#-----------------------------
 species_to_sample <- read.csv("final_taxa_sample.csv")[,2]
 load("supporting_datasets/ref_table.Rsave")
 taxized_names <- unique(ref_table[,1][ref_table$newick_names %in% species_to_sample])
