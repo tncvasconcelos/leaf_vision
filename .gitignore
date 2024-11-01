@@ -70,3 +70,5 @@ data/old
 data/groundtruth_overlay/
 evergreen_deciduous/
 data/merged_dataset_final.csv
+FIGURES/
+data/Petiole_Visualizations/

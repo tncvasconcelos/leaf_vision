@@ -6,7 +6,7 @@ library(phytools)
 library(scales)
 library(RColorBrewer)
 
-get.rqrs <- function(organized_table, full_dataset, phy, dep.var="div_rate_eps0.9") {
+get.rqrs <- function(organized_table, full_dataset, phy, dep.var="lma") {
   vars <- setdiff(colnames(organized_table),c("(Intercept)","df","logLik","AICc","delta","weight"))
   only_var <- organized_table[,vars]
   colnames(full_dataset)[which(colnames(full_dataset)==dep.var)] <- "focal_var"
@@ -14,7 +14,7 @@ get.rqrs <- function(organized_table, full_dataset, phy, dep.var="div_rate_eps0.
   for(i in 1:nrow(organized_table)) {
     to_include_in_model <- colnames(only_var)[which(only_var[i,] != "")]
     tmp_dataset <- full_dataset[c("focal_var", to_include_in_model)]
-    model <- phylolm(focal_var~.,data=tmp_dataset, phy=phy)
+    model <- phylolm(focal_var~.,data=tmp_dataset, phy=phy, model = "lambda", REML = FALSE)
     rqsrs[i] <- round(model$r.squared,3)
     cat(i,"\r")
   }
@@ -22,30 +22,6 @@ get.rqrs <- function(organized_table, full_dataset, phy, dep.var="div_rate_eps0.
   return(organized_table)
 }
 
-organize.table <- function(table_results, thrsh=T) {
-  if(thrsh) {
-    subset_best_fit <- subset(table_results, table_results$delta < 2)
-  } else {
-    subset_best_fit <- table_results
-  }
-  subset_best_fit <- subset_best_fit[,-1]
-  vars <- setdiff(colnames(subset_best_fit),c("df","logLik","AICc","delta","weight"))
-  only_var <- subset_best_fit[,vars]
-  stats <- subset_best_fit[,c("df","logLik","AICc","delta","weight")]
-  for(i in 1:nrow(only_var)) {
-    #only_var[i,][which(!is.na(only_var[i,]))] <- "x"
-    only_var[i,][which(is.na(only_var[i,]))] <- ""
-    
-    cat(i,"\r")
-  }
-  tmp_df <- cbind(only_var, stats)
-  tmp_df$logLik <- round(tmp_df$logLik, 1)
-  tmp_df$AICc <- round(tmp_df$AICc, 1)
-  tmp_df$delta <- round(tmp_df$delta, 2)
-  tmp_df$weight <- round(tmp_df$weight, 2)
-  rownames(tmp_df) <- paste0("model ", 1:nrow(tmp_df))
-  return(tmp_df)
-}
 
 setwd("~/leaf_vision/")
 
@@ -212,10 +188,9 @@ plot(fitted_values_phylolm, residuals_phylolm,
   main = "Residuals vs Fitted Values")
 abline(h = 0, col = "red")
 
+
 #------------------------------------
-## some plots:
-
-
+#dev.off()
 
 ## REPEAT ANALYSIS BUT WITH LEAF PHENOLOGY
 deciduousness <- data.frame(sp = merged_dataset$genus_species, 
@@ -235,6 +210,7 @@ formula_full <- as.formula(paste("lma ~", paste(c(reduced_vars, "deciduousness")
 full_model <- phylolm(formula_full, phy = phy, data = data_subset, model = "lambda", REML = FALSE)
 
 aggregate(data_subset$lma, by = list(data_subset$deciduousness), mean)
+# save(data_subset, file="results/data_subset_w_leaf_phenology.Rsave")
 
 # Summary of the model
 summary(full_model)
@@ -248,6 +224,8 @@ library(MuMIn)
 
 # Perform model selection
 model_set <- dredge(full_model, trace = TRUE, rank = "AICc")
+dredge_w_rqrs <- get.rqrs(organized_table=model_set, full_dataset=data_subset, phy=phy, dep.var="lma")
+
 saveRDS(model_set, file = "models/model_set_07a_lp.rds")
 model_set <- readRDS(file = "models/model_set_07a_lp.rds")
 
