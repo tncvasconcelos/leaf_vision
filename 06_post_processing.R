@@ -6,7 +6,7 @@ library(raster)
 library(geodata)
 
 #---------------------------------------
-# Functions
+# Loading Functions we will need
 #---------------------------------------
 # WWFload is taken from speciesgeocodeR; all credit goes to the original authors
 WWFload <- function(x = NULL) {
@@ -87,7 +87,7 @@ FilterWCVP_genus <- function(points, all_vars, twgd_data, lon="decimalLongitude"
 # Read Leaf Machine output
 all_measurements <- fread("data/LM2_MEASUREMENTS_CLEAN.csv") #this is on gitignore due to size
 # Read petiole width data
-petiole_measurements <- fread("data/width_data_all_specimens_LM2.csv")
+petiole_measurements <- fread("data/width_data_all_specimens_LM2.csv") # lastest results as of Oct 30th 2024
 # Merge datasets
 merged_dataset <- merge(all_measurements, petiole_measurements, by.x="component_name",by.y="filename")
 # remove NAs from area data
@@ -104,50 +104,29 @@ for(i in 1:nrow(merged_dataset)) {
   }
   cat(i, "of", nrow(merged_dataset), "\r")
 }
+
 #---------------------------------------
 # Save point
 # write.csv(merged_dataset, file="data/merged_dataset.csv", row.names=F)
 # merged_dataset <- fread("data/merged_dataset.csv")
 #---------------------------------------
 
-# Some summary stats and plots:
-min(merged_dataset$area)
-merged_dataset$filename[which.min(merged_dataset$area)]
-max(merged_dataset$area)
-merged_dataset$filename[which.max(merged_dataset$area)]
-
-pdf("results/leaf_area_dist.pdf")
-hist(log(merged_dataset$area), breaks=100, xlab="log(leaf area cm^2)", main="Leaf area distribution")
-dev.off()
-
-min(merged_dataset$petiole_width)
-merged_dataset$filename[which.min(merged_dataset$petiole_width)]
-max(merged_dataset$petiole_width)
-merged_dataset$filename[which.max(merged_dataset$petiole_width)]
-
-pdf("results/petiole_width_dist.pdf")
-hist(log(merged_dataset$petiole_width), breaks=100, xlab="log(petiole width cm)", main="Petiole width distribution")
-dev.off()
-
-pdf("results/cor_leaf_area_petiole_width.pdf")
-model <- lm(log(merged_dataset$area)~log(merged_dataset$petiole_width))
-summary(model)
-plot(log(merged_dataset$area)~log(merged_dataset$petiole_width), 
-     xlab="log(petiole width cm)", ylab="log(leaf area cm^2)")
-abline(model, col="red")
-dev.off()
-
-#---------------------------------------
 # Transform petiole width and leaf area into LMA
 merged_dataset$LMA <- NA
+
+# transforming area into m^2 to be easier to compare with other studies
+merged_dataset$area <- merged_dataset$area * 0.0001
+
+# transforming petiole width into m as well
+merged_dataset$petiole_width <- merged_dataset$petiole_width * 0.01
+
 for(i in 1:nrow(merged_dataset)) {
   one_subset <- subset(merged_dataset, merged_dataset$filename %in% merged_dataset$filename[i])
   petiole_width_for_lma <- min(one_subset$petiole_width)
-  merged_dataset$LMA[i] <- make_LMA(merged_dataset$area[i], petiole_width_for_lma)
+  merged_dataset$LMA[i] <- make_LMA(merged_dataset$area[i], petiole_width_for_lma) * 100
   cat(i, "of", nrow(merged_dataset), "\r")
 }
 
-#length(unique(merged_dataset$filename))
 
 #---------------------------------------
 # Save point

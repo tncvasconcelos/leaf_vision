@@ -8,7 +8,8 @@ library(RColorBrewer)
 
 setwd("~/leaf_vision/")
 
-merged_dataset <- read.csv("data/merged_dataset.csv")
+merged_dataset <- read.csv("data/merged_dataset_final.csv")
+
 merged_dataset$genus_species <- gsub(" ", "_", merged_dataset$genus_species)
 tre <- read.tree("trees/GBMB.tre")
 

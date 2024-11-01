@@ -1,6 +1,6 @@
 # Pruning Smith and Brown (2018) molecular tree to include only species that have at least 10 imaged specimens with valid coordinates
 # rm(list=ls())
-# setwd("/Users/tvasc/Desktop/leaf_computer_vision")
+# setwd("~/leaf_computer_vision")
 
 #-----------------------------
 # Pruning tree to match list of species with 10 imaged specimens with valid coordinates
