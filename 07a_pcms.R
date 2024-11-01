@@ -6,6 +6,47 @@ library(phytools)
 library(scales)
 library(RColorBrewer)
 
+get.rqrs <- function(organized_table, full_dataset, phy, dep.var="div_rate_eps0.9") {
+  vars <- setdiff(colnames(organized_table),c("(Intercept)","df","logLik","AICc","delta","weight"))
+  only_var <- organized_table[,vars]
+  colnames(full_dataset)[which(colnames(full_dataset)==dep.var)] <- "focal_var"
+  rqsrs <- c()
+  for(i in 1:nrow(organized_table)) {
+    to_include_in_model <- colnames(only_var)[which(only_var[i,] != "")]
+    tmp_dataset <- full_dataset[c("focal_var", to_include_in_model)]
+    model <- phylolm(focal_var~.,data=tmp_dataset, phy=phy)
+    rqsrs[i] <- round(model$r.squared,3)
+    cat(i,"\r")
+  }
+  organized_table$rsqs <- rqsrs
+  return(organized_table)
+}
+
+organize.table <- function(table_results, thrsh=T) {
+  if(thrsh) {
+    subset_best_fit <- subset(table_results, table_results$delta < 2)
+  } else {
+    subset_best_fit <- table_results
+  }
+  subset_best_fit <- subset_best_fit[,-1]
+  vars <- setdiff(colnames(subset_best_fit),c("df","logLik","AICc","delta","weight"))
+  only_var <- subset_best_fit[,vars]
+  stats <- subset_best_fit[,c("df","logLik","AICc","delta","weight")]
+  for(i in 1:nrow(only_var)) {
+    #only_var[i,][which(!is.na(only_var[i,]))] <- "x"
+    only_var[i,][which(is.na(only_var[i,]))] <- ""
+    
+    cat(i,"\r")
+  }
+  tmp_df <- cbind(only_var, stats)
+  tmp_df$logLik <- round(tmp_df$logLik, 1)
+  tmp_df$AICc <- round(tmp_df$AICc, 1)
+  tmp_df$delta <- round(tmp_df$delta, 2)
+  tmp_df$weight <- round(tmp_df$weight, 2)
+  rownames(tmp_df) <- paste0("model ", 1:nrow(tmp_df))
+  return(tmp_df)
+}
+
 setwd("~/leaf_vision/")
 
 merged_dataset <- read.csv("data/merged_dataset_final.csv")
@@ -21,6 +62,7 @@ lma_results <- data.frame(sp = lma_results$Group.1,
 
 merged_dataset <- merged_dataset[!duplicated(merged_dataset$filename),]
 
+# some data curation to include only columns we're running models for
 merged_dataset_2 <- merged_dataset[,!colnames(merged_dataset) == "super_biome"]
 merged_dataset_2 <- merged_dataset_2[,!colnames(merged_dataset_2) == "deciduousness"]
 merged_dataset_2 <- merged_dataset_2[,!colnames(merged_dataset_2) == "leaf_phenology"]
@@ -140,6 +182,8 @@ library(MuMIn)
 
 # Perform model selection
 model_set <- dredge(full_model, trace = TRUE, rank = "AICc")
+dredge_w_rqrs <- get.rqrs(organized_table=model_set, full_dataset=data_subset, phy=phy, dep.var="lma")
+
 saveRDS(model_set, file = "models/model_set_07a.rds")
 model_set <- readRDS(file = "models/model_set_07a.rds")
 
@@ -167,6 +211,10 @@ plot(fitted_values_phylolm, residuals_phylolm,
   ylab = "Residuals",
   main = "Residuals vs Fitted Values")
 abline(h = 0, col = "red")
+
+#------------------------------------
+## some plots:
+
 
 
 ## REPEAT ANALYSIS BUT WITH LEAF PHENOLOGY
@@ -227,3 +275,5 @@ plot(fitted_values_phylolm, residuals_phylolm,
   ylab = "Residuals",
   main = "Residuals vs Fitted Values")
 abline(h = 0, col = "red")
+
+
