@@ -6,27 +6,9 @@ library(phytools)
 library(scales)
 library(RColorBrewer)
 
-get.rqrs <- function(organized_table, full_dataset, phy, dep.var="lma") {
-  vars <- setdiff(colnames(organized_table),c("(Intercept)","df","logLik","AICc","delta","weight"))
-  only_var <- organized_table[,vars]
-  colnames(full_dataset)[which(colnames(full_dataset)==dep.var)] <- "focal_var"
-  rqsrs <- c()
-  for(i in 1:nrow(organized_table)) {
-    to_include_in_model <- colnames(only_var)[which(only_var[i,] != "")]
-    tmp_dataset <- full_dataset[c("focal_var", to_include_in_model)]
-    model <- phylolm(focal_var~.,data=tmp_dataset, phy=phy, model = "lambda", REML = FALSE)
-    rqsrs[i] <- round(model$r.squared,3)
-    cat(i,"\r")
-  }
-  organized_table$rsqs <- rqsrs
-  return(organized_table)
-}
-
-
 setwd("~/leaf_vision/")
 
 merged_dataset <- read.csv("data/merged_dataset_final.csv")
-
 merged_dataset$genus_species <- gsub(" ", "_", merged_dataset$genus_species)
 tre <- read.tree("trees/GBMB.tre")
 
@@ -38,7 +20,6 @@ lma_results <- data.frame(sp = lma_results$Group.1,
 
 merged_dataset <- merged_dataset[!duplicated(merged_dataset$filename),]
 
-# some data curation to include only columns we're running models for
 merged_dataset_2 <- merged_dataset[,!colnames(merged_dataset) == "super_biome"]
 merged_dataset_2 <- merged_dataset_2[,!colnames(merged_dataset_2) == "deciduousness"]
 merged_dataset_2 <- merged_dataset_2[,!colnames(merged_dataset_2) == "leaf_phenology"]
@@ -61,6 +42,7 @@ dat <- dat[phy$tip.label,]
 H <- max(node.depth.edgelength(phy))
 
 write.csv(dat, file = "data/lma_dat_a.csv", row.names = FALSE)
+write.tree(phy, file = "trees/phy_070a.tre")
 
 rescale_values <- function(x, a, b) {
   (a + (x - min(x)) / (max(x) - min(x)) * (b - a))
@@ -89,8 +71,6 @@ summary(dat)
 
 # Check for missing values
 colSums(is.na(dat))
-
-#save(dat,phy, file="results/data_subset_for_plots.Rsave")
 
 # Histogram of LMA
 ggplot(dat, aes(x = lma)) +
@@ -138,15 +118,11 @@ plot(pca_res, type = "l")
 cumsum(summary(pca_res)$importance[2, ])
 
 ## FULL PHYLO REGRESSION
-# Create a comparative data object
-# comp_data <- comparative.data(phy, dat[,c("sp", "lma", reduced_vars)], 
-#   names.col = "sp", vcv = TRUE, na.omit = TRUE)
-
-# Full model with all predictors (after variable selection)
-# full_model <- pgls(lma ~ ., data = comp_data, lambda = "ML")
 data_subset <- dat[, c("lma", reduced_vars)]
+# data_subset <- dat[, c("lma", "et0")]
 formula_full <- as.formula(paste("lma ~", paste(reduced_vars, collapse = " + ")))
-full_model <- phylolm(formula_full, phy = phy, data = data_subset, model = "lambda")
+# formula_full <- as.formula(paste("lma ~ et0"))
+full_model <- phylolm(formula_full, phy = phy, data = data_subset, model = "lambda", REML = FALSE)
 
 # Summary of the model
 summary(full_model)
@@ -160,8 +136,6 @@ library(MuMIn)
 
 # Perform model selection
 model_set <- dredge(full_model, trace = TRUE, rank = "AICc")
-dredge_w_rqrs <- get.rqrs(organized_table=model_set, full_dataset=data_subset, phy=phy, dep.var="lma")
-
 saveRDS(model_set, file = "models/model_set_07a.rds")
 model_set <- readRDS(file = "models/model_set_07a.rds")
 
@@ -191,9 +165,6 @@ plot(fitted_values_phylolm, residuals_phylolm,
 abline(h = 0, col = "red")
 
 
-#------------------------------------
-#dev.off()
-
 ## REPEAT ANALYSIS BUT WITH LEAF PHENOLOGY
 deciduousness <- data.frame(sp = merged_dataset$genus_species, 
   deciduousness = as.factor(merged_dataset$leaf_phenology))
@@ -212,7 +183,6 @@ formula_full <- as.formula(paste("lma ~", paste(c(reduced_vars, "deciduousness")
 full_model <- phylolm(formula_full, phy = phy, data = data_subset, model = "lambda", REML = FALSE)
 
 aggregate(data_subset$lma, by = list(data_subset$deciduousness), mean)
-# save(data_subset,phy, file="results/data_subset_w_leaf_phenology.Rsave")
 
 # Summary of the model
 summary(full_model)
@@ -226,8 +196,6 @@ library(MuMIn)
 
 # Perform model selection
 model_set <- dredge(full_model, trace = TRUE, rank = "AICc")
-dredge_w_rqrs <- get.rqrs(organized_table=model_set, full_dataset=data_subset, phy=phy, dep.var="lma")
-
 saveRDS(model_set, file = "models/model_set_07a_lp.rds")
 model_set <- readRDS(file = "models/model_set_07a_lp.rds")
 
@@ -255,5 +223,3 @@ plot(fitted_values_phylolm, residuals_phylolm,
   ylab = "Residuals",
   main = "Residuals vs Fitted Values")
 abline(h = 0, col = "red")
-
-
