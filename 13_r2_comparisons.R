@@ -1,5 +1,7 @@
+library(ape)
 library(MuMIn)
 library(rr2)
+library(phylolm)
 setwd("~/leaf_vision/")
 
 # 07a
