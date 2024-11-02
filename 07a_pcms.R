@@ -90,6 +90,8 @@ summary(dat)
 # Check for missing values
 colSums(is.na(dat))
 
+#save(dat,phy, file="results/data_subset_for_plots.Rsave")
+
 # Histogram of LMA
 ggplot(dat, aes(x = lma)) +
   geom_histogram(binwidth = 0.1, fill = "blue", color = "black") +
@@ -210,7 +212,7 @@ formula_full <- as.formula(paste("lma ~", paste(c(reduced_vars, "deciduousness")
 full_model <- phylolm(formula_full, phy = phy, data = data_subset, model = "lambda", REML = FALSE)
 
 aggregate(data_subset$lma, by = list(data_subset$deciduousness), mean)
-# save(data_subset, file="results/data_subset_w_leaf_phenology.Rsave")
+# save(data_subset,phy, file="results/data_subset_w_leaf_phenology.Rsave")
 
 # Summary of the model
 summary(full_model)

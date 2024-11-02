@@ -1,35 +1,76 @@
+#------------------------------------
 
-
-
+# Load necessary libraries
+library(phylolm)
 library(ggplot2)
+library(dplyr)
+
+load("results/data_subset_w_leaf_phenology.Rsave")
+
+model <- phylolm(lma~bio_1, data=dat, phy=phy)
+summary(model)
+
+plot(lma~bio_1,data=dat)
+abline(model, col="red")
+
+# Generate a sequence of bio_5 values for smooth lines
+bio_5_seq <- seq(min(data_subset$bio_5), max(data_subset$bio_5), length.out = 100)
+
+# Create a data frame for each deciduousness level for predictions
+pred_evergreen <- data.frame(bio_5 = bio_5_seq, deciduousness = "evergreen")
+pred_deciduous <- data.frame(bio_5 = bio_5_seq, deciduousness = "deciduous")
+
+# Predict lma for each level using the phylogenetic model
+pred_evergreen$lma <- predict(model_evergreen, newdata = pred_evergreen)
+pred_deciduous$lma <- predict(model_deciduous, newdata = pred_deciduous)
+
+# Combine the prediction data
+pred_data <- rbind(pred_evergreen, pred_deciduous)
 
 
-# Split data by binary variable
-df0 <- subset(df, binary_var == 0)
-df1 <- subset(df, binary_var == 1)
+# Plot with solid lines
+bio_5_plot <- ggplot(data_subset, aes(x = bio_5, y = lma, color = deciduousness)) +
+  geom_point(size = 1) +
+  geom_line(data = pred_data, aes(y = lma, color = deciduousness), size = 0.8) +
+  labs(color = "Deciduousness") +
+  theme_bw() +
+  ggtitle("Phylogenetically Corrected Regression of LMA on BIO_5") +
+  scale_color_manual(values = c("evergreen" = "darkblue", "deciduous" = "orange"))
 
-# Calculate regression lines (replace with your custom model)
-# Example with hypothetical custom_model function:
-model0 <- my_custom_model(y ~ x, data = df0)  # Fit model for binary_var = 0
-model1 <- my_custom_model(y ~ x, data = df1)  # Fit model for binary_var = 1
+#----------------------------------
 
-# Predict values based on models
-df0$y_pred <- predict(model0, newdata = df0)
-df1$y_pred <- predict(model1, newdata = df1)
 
-# Combine predictions for plotting
-df_pred <- rbind(df0, df1)
+# Fit phylogenetic regression models for each level of deciduousness
+model_evergreen <- phylolm(lma ~ ai, data = filter(data_subset, deciduousness == "evergreen"), phy = phy)
+model_deciduous <- phylolm(lma ~ ai, data = filter(data_subset, deciduousness == "deciduous"), phy = phy)
 
-# Plot with ggplot2
-ggplot(df, aes(x = x, y = y, color = factor(binary_var))) +
-  geom_point() +  # Scatter plot points
-  geom_line(data = df_pred, aes(x = x, y = y_pred, color = factor(binary_var))) +  # Custom regression lines
-  labs(color = "Binary Variable") +
-  theme_minimal()
+# Create predictions for plotting
+data_subset <- data_subset %>%
+  mutate(pred_evergreen = ifelse(deciduousness == "evergreen", predict(model_evergreen, newdata = .), NA),
+         pred_deciduous = ifelse(deciduousness == "deciduous", predict(model_deciduous, newdata = .), NA))
 
-ggplot(data_subset, aes(x = srad, y = lma, color = factor(deciduousness))) +
-  geom_point() +  # Scatter plot points
-  geom_smooth(method = "lm", se = FALSE) +  # Regression lines without confidence intervals
-  labs(color = "Binary Variable") +  # Label for the legend
-  theme_minimal()  # Minimal theme for better aesthetics
+# Generate a sequence of bio_5 values for smooth lines
+ai_seq <- seq(min(data_subset$ai), max(data_subset$ai), length.out = 100)
+
+# Create a data frame for each deciduousness level for predictions
+pred_evergreen <- data.frame(ai = ai_seq, deciduousness = "evergreen")
+pred_deciduous <- data.frame(ai = ai_seq, deciduousness = "deciduous")
+
+# Predict lma for each level using the phylogenetic model
+pred_evergreen$lma <- predict(model_evergreen, newdata = pred_evergreen)
+pred_deciduous$lma <- predict(model_deciduous, newdata = pred_deciduous)
+
+# Combine the prediction data
+pred_data <- rbind(pred_evergreen, pred_deciduous)
+
+# Plot with solid lines
+bio_5_plot <- ggplot(data_subset, aes(x = ai, y = lma, color = deciduousness)) +
+  geom_point(size = 1) +
+  geom_line(data = pred_data, aes(y = lma, color = deciduousness), size = 0.8) +
+  labs(color = "Deciduousness") +
+  theme_bw() +
+  ggtitle("Phylogenetically Corrected Regression of LMA on AI") +
+  scale_color_manual(values = c("evergreen" = "darkblue", "deciduous" = "orange"))
+
+
 
