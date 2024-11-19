@@ -5,8 +5,8 @@ library(phylolm)
 setwd("~/leaf_vision/")
 
 # 07a
-full_model <- readRDS(file = "models/full_model_07a.rds")
-model_set <- readRDS(file = "models/model_set_07a.rds")
+full_model <- readRDS(file = "models/full_model_07b.rds")
+model_set <- readRDS(file = "models/model_set_07b.rds")
 phy <- read.tree("trees/phy_070a.tre")
 data_subset <- dat <- full_model$model.frame
 full_formula <- full_model$formula

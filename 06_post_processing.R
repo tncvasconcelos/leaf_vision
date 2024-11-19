@@ -231,6 +231,8 @@ srad <- raster("layers/mean_srad.tif")
 et0 <- raster("layers/et0_v3_yr.tif")
 ai <- raster("layers/ai_v3_yr.tif")
 
+#plot(srad)
+
 coordinates <- merged_dataset[,c("lat","lon")]
 points <- coordinates
 layers <- c(bio_clim, alt, ai, wind, srad, et0)
