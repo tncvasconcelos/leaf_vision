@@ -42,17 +42,19 @@ merged_dataset$filename[which.max(merged_dataset$petiole_width)]
 # dev.off()
 
 #pdf("results/cor_leaf_area_petiole_width.pdf")
-model <- lm(log(merged_dataset$area)~log(merged_dataset$petiole_width))
-summary(model)
-plot(log(merged_dataset$area)~log(merged_dataset$petiole_width), 
-     xlab="log(petiole width cm)", ylab="log(leaf area cm^2)")
-
-abline(model, col="red")
+# model <- lm(log(merged_dataset$area)~log(merged_dataset$petiole_width))
+# summary(model)
+# plot(log(merged_dataset$area)~log(merged_dataset$petiole_width), 
+#      xlab="log(petiole width cm)", ylab="log(leaf area cm^2)")
+# 
+# abline(model, col="red")
 #dev.off()
 
 
 #-------------------------------
-# GT COMPARISON
+# FIGURE 3
+#-------------------------------
+# gt petiole comparison
 manual_measurements <- as.data.frame(fread("data/GT_comparison.csv"))
 model <- lm(manual_measurements$width_pixels~manual_measurements$pixel_distance)
 coef_model <- coef(model)  # Intercept and slope
@@ -95,60 +97,6 @@ gt_comparison_scatter_plot <- ggplot(manual_measurements, aes(x = width_pixels, 
   ) +
   ggtitle("")
 
-# #-------------------------------
-# merged_dataset$petiole_width <- log(merged_dataset$petiole_width)
-# merged_dataset$area <- log(merged_dataset$area)
-# model <- lm(merged_dataset$petiole_width~merged_dataset$area)
-# coef_model <- coef(model)  # Intercept and slope
-# r2 <- summary(model)$r.squared  # R-squared
-# p_value <- summary(model)$coefficients[2, 4]  # p-value for the slope
-# 
-# # Create a text label with R² and p-value
-# label_text <- paste0(
-#   "R² = ", round(r2, 3), 
-#   "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
-# )
-# 
-# pw_la_comparison_scatter_plot <- ggplot(merged_dataset, aes(x = area, y = petiole_width)) +
-#   geom_point(aes(color = petiole_width), size = 3, alpha = 0.7) +
-#   scale_color_viridis_c(option = "C", end = 0.85) +
-#   # Add a custom linear model trend line using the equation from `model`
-#   geom_abline(
-#     intercept = coef(model)[1], 
-#     slope = coef(model)[2], 
-#     color = "black", linetype = "dashed", linewidth = 1
-#   ) +
-#   annotate(
-#     "text", x = min(merged_dataset$area) , y = max(merged_dataset$petiole_width) * 0.9, 
-#     label = label_text, size = 5, hjust = 0, vjust = 1
-#   ) +
-#   labs(
-#     x = "log(LA)",
-#     y = "log(PW)",
-#   ) +
-#   theme_bw(base_size = 15) +
-#   theme(
-#     plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
-#     panel.grid.major = element_line(color = "grey85"),
-#     legend.position = ""
-#   ) +
-#   ggtitle("")
-
-#-------------------------------
-pdf("FIGURES/PW_comparison.pdf" ,height=5,width=5)
-gt_comparison_scatter_plot
-dev.off()
-
-
-
-
-
-
-# rm(list=ls())
-# setwd("~/Desktop/leaf_computer_vision")
-library(gridExtra)
-library(data.table)
-library(ggplot2)
 
 #---------------------------------------
 merged_dataset <- read.csv("data/merged_dataset_final.csv")
@@ -207,4 +155,22 @@ pdf("FIGURES/plot_for_figure3_test.pdf" ,height=10,width=10)
 grid.arrange(petiole_width_hist, LA_hist, gt_comparison_scatter_plot, LMA_hist, ncol=2, nrow = 2)
 dev.off()
 
+
 #-------------------------------
+load("results/data_subset_w_leaf_phenology.Rsave")
+data_subset$lma <- exp(data_subset$lma)*100
+
+median(data_subset$lma[data_subset$deciduousness=="evergreen"])
+median(data_subset$lma[data_subset$deciduousness=="deciduous"])
+
+
+pdf("FIGURES/boxplot_deciduousness.pdf", height=3, width=6)
+ggplot(data_subset, aes(x = deciduousness, y = lma, fill = deciduousness)) +
+  geom_boxplot(outlier.shape = NA, width = 0.6) +  # Box plot without outliers
+  geom_jitter(aes(color = deciduousness), width = 0.2, size = 1.5, alpha = 0.3) +  # Jitter points with matching color and increased transparency
+  theme_bw() +
+  labs(x = "Deciduousness", y = "LMA") +
+  scale_fill_manual(values = c("evergreen" = "darkgreen", "deciduous" = "orange")) +  # Custom fill colors
+  scale_color_manual(values = c("evergreen" = "darkgreen", "deciduous" = "orange")) +  # Matching color for jitter points
+  theme(legend.position = "none")  # Remove legend if not needed
+dev.off()

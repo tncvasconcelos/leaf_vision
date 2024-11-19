@@ -1,76 +1,414 @@
 #------------------------------------
-
 # Load necessary libraries
 library(phylolm)
 library(ggplot2)
 library(dplyr)
+library(gridExtra)
+library(data.table)
 
-load("results/data_subset_w_leaf_phenology.Rsave")
+load("results/data_subset_for_plots.Rsave")
+dat$lma <- log((exp(dat$lma) * 100))
 
-model <- phylolm(lma~bio_1, data=dat, phy=phy)
-summary(model)
+#--------------------------
+# BIO2
+model <- phylolm(lma~bio_2, data=dat, phy=phy, model = "lambda", REML = FALSE)
 
-plot(lma~bio_1,data=dat)
-abline(model, col="red")
+coef_model <- coef(model)  # Intercept and slope
+r2 <- summary(model)$r.squared  # R-squared
+p_value <- summary(model)$coefficients[2, 4]  # p-value for the slope
 
-# Generate a sequence of bio_5 values for smooth lines
-bio_5_seq <- seq(min(data_subset$bio_5), max(data_subset$bio_5), length.out = 100)
+# Create a text label with R² and p-value
+label_text <- paste0(
+  "R² = ", round(r2, 3), 
+  "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
+)
 
-# Create a data frame for each deciduousness level for predictions
-pred_evergreen <- data.frame(bio_5 = bio_5_seq, deciduousness = "evergreen")
-pred_deciduous <- data.frame(bio_5 = bio_5_seq, deciduousness = "deciduous")
+lma_bio_2_plot <- ggplot(dat, aes(x = bio_2, y = lma)) +
+  geom_point(aes(color = lma), size = 2, alpha = 0.5) +
+  geom_density_2d(color = "black", linewidth = 0.4) +  # Add contour lines
+  scale_color_viridis_c(option = "D", end = 0.85) +
+  geom_abline(
+    intercept = coef(model)[1],
+    slope = coef(model)[2],
+    color = "black", linetype = "dashed", linewidth = 1
+  ) +
+  # annotate(
+  #   "text", x = min(dat$bio_2), y = 6.9,
+  #   label = label_text, size = 5, hjust = 0, vjust = 1
+  # ) +
+  labs(
+    x = "Mean Diurnal Range",
+    y = expression("log LMA " (g/m^2))
+  ) +
+  theme_bw(base_size = 15) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
+    panel.grid.major = element_line(color = "grey85"),
+    legend.position = ""
+  ) +
+  ggtitle("")
 
-# Predict lma for each level using the phylogenetic model
-pred_evergreen$lma <- predict(model_evergreen, newdata = pred_evergreen)
-pred_deciduous$lma <- predict(model_deciduous, newdata = pred_deciduous)
+#--------------------------
+# BIO3
+model <- phylolm(lma~bio_3, data=dat, phy=phy, model = "lambda", REML = FALSE)
+coef_model <- coef(model)  # Intercept and slope
+r2 <- summary(model)$r.squared  # R-squared
+p_value <- summary(model)$coefficients[2, 4]  # p-value for the slope
 
-# Combine the prediction data
-pred_data <- rbind(pred_evergreen, pred_deciduous)
+# Create a text label with R² and p-value
+label_text <- paste0(
+  "R² = ", round(r2, 3), 
+  "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
+)
 
+lma_bio_3_plot <- ggplot(dat, aes(x = bio_3, y = lma)) +
+  geom_point(aes(color = lma), size = 2, alpha = 0.5) +
+  scale_color_viridis_c(option = "D", end = 0.85) +
+  geom_density_2d(color = "black", linewidth = 0.4) +  # Add contour lines
+  # Add a custom linear model trend line using the equation from `model`
+  geom_abline(
+    intercept = coef(model)[1],
+    slope = coef(model)[2],
+    color = "black", linetype = "dashed", linewidth = 1
+  ) +
+  # annotate(
+  #   "text", x = min(dat$bio_2) , y = 6.9,
+  #   label = label_text, size = 5, hjust = 0, vjust = 1
+  # ) +
+  labs(
+    x = "Isothermality",
+    y = expression("log LMA " (g/m^2)),
+  ) +
+  theme_bw(base_size = 15) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
+    panel.grid.major = element_line(color = "grey85"),
+    legend.position = ""
+  ) +
+  ggtitle("")
+#-------------------------
+#-------------------------
+# BIO5
+model <- phylolm(lma~bio_5, data=dat, phy=phy,model = "lambda", REML = FALSE)
+coef_model <- coef(model)  # Intercept and slope
+r2 <- summary(model)$r.squared  # R-squared
+p_value <- summary(model)$coefficients[2, 4]  # p-value for the slope
 
-# Plot with solid lines
-bio_5_plot <- ggplot(data_subset, aes(x = bio_5, y = lma, color = deciduousness)) +
-  geom_point(size = 1) +
-  geom_line(data = pred_data, aes(y = lma, color = deciduousness), size = 0.8) +
-  labs(color = "Deciduousness") +
-  theme_bw() +
-  ggtitle("Phylogenetically Corrected Regression of LMA on BIO_5") +
-  scale_color_manual(values = c("evergreen" = "darkblue", "deciduous" = "orange"))
+# Create a text label with R² and p-value
+label_text <- paste0(
+  "R² = ", round(r2, 3), 
+  "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
+)
 
-#----------------------------------
+lma_bio_5_plot <- ggplot(dat, aes(x = bio_5, y = lma)) +
+  geom_point(aes(color = lma), size = 2, alpha = 0.5) +
+  scale_color_viridis_c(option = "D", end = 0.85) +
+  geom_density_2d(color = "black", linewidth = 0.4) +  # Add contour lines
+  # Add a custom linear model trend line using the equation from `model`
+  geom_abline(
+    intercept = coef(model)[1], 
+    slope = coef(model)[2], 
+    color = "black", linetype = "dashed", linewidth = 1
+  ) +
+  # annotate(
+  #   "text", x = min(dat$bio_5) , y = 6.9, 
+  #   label = label_text, size = 5, hjust = 0, vjust = 1
+  # ) +
+  labs(
+    x = "Max Temperature of the Warmest Month ",
+    y = expression("log LMA " (g/m^2)),
+  ) +
+  theme_bw(base_size = 15) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
+    panel.grid.major = element_line(color = "grey85"),
+    legend.position = ""
+  ) +
+  ggtitle("")
+#-------------------------
+# BIO15
+model <- phylolm(lma~bio_15, data=dat, phy=phy, model = "lambda", REML = FALSE)
+coef_model <- coef(model)  # Intercept and slope
+r2 <- summary(model)$r.squared  # R-squared
+p_value <- summary(model)$coefficients[2, 4]  # p-value for the slope
 
+# Create a text label with R² and p-value
+label_text <- paste0(
+  "R² = ", round(r2, 3), 
+  "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
+)
 
-# Fit phylogenetic regression models for each level of deciduousness
-model_evergreen <- phylolm(lma ~ ai, data = filter(data_subset, deciduousness == "evergreen"), phy = phy)
-model_deciduous <- phylolm(lma ~ ai, data = filter(data_subset, deciduousness == "deciduous"), phy = phy)
+lma_bio_15_plot <- ggplot(dat, aes(x = bio_15, y = lma)) +
+  geom_point(aes(color = lma), size = 2, alpha = 0.5) +
+  scale_color_viridis_c(option = "D", end = 0.85) +
+  geom_density_2d(color = "black", linewidth = 0.4) +  # Add contour lines
+  # Add a custom linear model trend line using the equation from `model`
+  geom_abline(
+    intercept = coef(model)[1],
+    slope = coef(model)[2],
+    color = "black", linetype = "dashed", linewidth = 1
+  ) +
+  # annotate(
+  #   "text", x = min(dat$bio_5) , y = 6.9, 
+  #   label = label_text, size = 5, hjust = 0, vjust = 1
+  # ) +
+  labs(
+    x = "Precipitation Seasonality ",
+    y = expression("log LMA " (g/m^2)),
+  ) +
+  theme_bw(base_size = 15) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
+    panel.grid.major = element_line(color = "grey85"),
+    legend.position = ""
+  ) +
+  ggtitle("")
+#-------------------------
+# BIO18
+model <- phylolm(lma~bio_18, data=dat, phy=phy,model = "lambda", REML = FALSE)
+coef_model <- coef(model)  # Intercept and slope
+r2 <- summary(model)$r.squared  # R-squared
+p_value <- summary(model)$coefficients[2, 4]  # p-value for the slope
 
-# Create predictions for plotting
-data_subset <- data_subset %>%
-  mutate(pred_evergreen = ifelse(deciduousness == "evergreen", predict(model_evergreen, newdata = .), NA),
-         pred_deciduous = ifelse(deciduousness == "deciduous", predict(model_deciduous, newdata = .), NA))
+# Create a text label with R² and p-value
+label_text <- paste0(
+  "R² = ", round(r2, 3), 
+  "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
+)
 
-# Generate a sequence of bio_5 values for smooth lines
-ai_seq <- seq(min(data_subset$ai), max(data_subset$ai), length.out = 100)
+lma_bio_18_plot <- ggplot(dat, aes(x = bio_18, y = lma)) +
+  geom_point(aes(color = lma), size = 2, alpha = 0.5) +
+  scale_color_viridis_c(option = "D", end = 0.85) +
+  geom_density_2d(color = "black", linewidth = 0.4) +  # Add contour lines
+  # Add a custom linear model trend line using the equation from `model`
+  geom_abline(
+    intercept = coef(model)[1],
+    slope = coef(model)[2],
+    color = "black", linetype = "dashed", linewidth = 1
+  ) +
+  # annotate(
+  #   "text", x = min(dat$bio_5) , y =6.9, 
+  #   label = label_text, size = 5, hjust = 0, vjust = 1
+  # ) +
+  labs(
+    x = "Precipitation of Warmest Quarter",
+    y = expression("log LMA " (g/m^2)),
+  ) +
+  theme_bw(base_size = 15) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
+    panel.grid.major = element_line(color = "grey85"),
+    legend.position = ""
+  ) +
+  ggtitle("")
+#-------------------------
+# BIO19
+model <- phylolm(lma~bio_19, data=dat, phy=phy,model = "lambda", REML = FALSE)
+coef_model <- coef(model)  # Intercept and slope
+r2 <- summary(model)$r.squared  # R-squared
+p_value <- summary(model)$coefficients[2, 4]  # p-value for the slope
 
-# Create a data frame for each deciduousness level for predictions
-pred_evergreen <- data.frame(ai = ai_seq, deciduousness = "evergreen")
-pred_deciduous <- data.frame(ai = ai_seq, deciduousness = "deciduous")
+# Create a text label with R² and p-value
+label_text <- paste0(
+  "R² = ", round(r2, 3), 
+  "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
+)
 
-# Predict lma for each level using the phylogenetic model
-pred_evergreen$lma <- predict(model_evergreen, newdata = pred_evergreen)
-pred_deciduous$lma <- predict(model_deciduous, newdata = pred_deciduous)
+lma_bio_19_plot <- ggplot(dat, aes(x = bio_19, y = lma)) +
+  geom_point(aes(color = lma), size = 2, alpha = 0.5) +
+  scale_color_viridis_c(option = "D", end = 0.85) +
+  geom_density_2d(color = "black", linewidth = 0.4) +  # Add contour lines
+  # Add a custom linear model trend line using the equation from `model`
+  geom_abline(
+    intercept = coef(model)[1],
+    slope = coef(model)[2],
+    color = "black", linetype = "dashed", linewidth = 1
+  ) +
+  # annotate(
+  #   "text", x = min(dat$bio_5) , y = 6.9, 
+  #   label = label_text, size = 5, hjust = 0, vjust = 1
+  # ) +
+  labs(
+    x = "Precipitation of Coldest Quarter",
+    y = expression("log LMA " (g/m^2)),
+  ) +
+  theme_bw(base_size = 15) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
+    panel.grid.major = element_line(color = "grey85"),
+    legend.position = ""
+  ) +
+  ggtitle("")
+#-------------------------
+#-------------------------
+# AI
+model <- phylolm(lma~ai, data=dat, phy=phy,model = "lambda", REML = FALSE)
+coef_model <- coef(model)  # Intercept and slope
+r2 <- summary(model)$r.squared  # R-squared
+p_value <- summary(model)$coefficients[2, 4]  # p-value for the slope
 
-# Combine the prediction data
-pred_data <- rbind(pred_evergreen, pred_deciduous)
+# Create a text label with R² and p-value
+label_text <- paste0(
+  "R² = ", round(r2, 3), 
+  "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
+)
 
-# Plot with solid lines
-bio_5_plot <- ggplot(data_subset, aes(x = ai, y = lma, color = deciduousness)) +
-  geom_point(size = 1) +
-  geom_line(data = pred_data, aes(y = lma, color = deciduousness), size = 0.8) +
-  labs(color = "Deciduousness") +
-  theme_bw() +
-  ggtitle("Phylogenetically Corrected Regression of LMA on AI") +
-  scale_color_manual(values = c("evergreen" = "darkblue", "deciduous" = "orange"))
+lma_ai_plot <- ggplot(dat, aes(x = ai, y = lma)) +
+  geom_point(aes(color = lma), size = 2, alpha = 0.5) +
+  scale_color_viridis_c(option = "D", end = 0.85) +
+  geom_density_2d(color = "black", linewidth = 0.4) +  # Add contour lines
+  # Add a custom linear model trend line using the equation from `model`
+  geom_abline(
+    intercept = coef(model)[1], 
+    slope = coef(model)[2], 
+    color = "black", linetype = "dashed", linewidth = 1
+  ) +
+  # annotate(
+  #   "text", x = min(dat$ai) , y = 6.9, 
+  #   label = label_text, size = 5, hjust = 0, vjust = 1
+  # ) +
+  labs(
+    x = "Aridity Index",
+    y = expression("log LMA " (g/m^2)),
+  ) +
+  theme_bw(base_size = 15) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
+    panel.grid.major = element_line(color = "grey85"),
+    legend.position = ""
+  ) +
+  ggtitle("")
+#-------------------------
+#-------------------------
+# S-RAD
+model <- phylolm(lma~srad, data=dat, phy=phy,model = "lambda", REML = FALSE)
+coef_model <- coef(model)  # Intercept and slope
+r2 <- summary(model)$r.squared  # R-squared
+p_value <- summary(model)$coefficients[2, 4]  # p-value for the slope
 
+# Create a text label with R² and p-value
+label_text <- paste0(
+  "R² = ", round(r2, 3), 
+  "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
+)
 
+lma_srad_plot <- ggplot(dat, aes(x = srad, y = lma)) +
+  geom_point(aes(color = lma), size = 2, alpha = 0.5) +
+  scale_color_viridis_c(option = "D", end = 0.85) +
+  geom_density_2d(color = "black", linewidth = 0.4) +  # Add contour lines
+  # Add a custom linear model trend line using the equation from `model`
+  geom_abline(
+    intercept = coef(model)[1], 
+    slope = coef(model)[2], 
+    color = "black", linetype = "dashed", linewidth = 1
+  ) +
+  # annotate(
+  #   "text", x = min(dat$bio_5) , y = 6.9, 
+  #   label = label_text, size = 5, hjust = 0, vjust = 1
+  # ) +
+  labs(
+    x = "Solar Radiation",
+    y = expression("log LMA " (g/m^2)),
+  ) +
+  theme_bw(base_size = 15) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
+    panel.grid.major = element_line(color = "grey85"),
+    legend.position = ""
+  ) +
+  ggtitle("")
+#-------------------------
+#-------------------------
+# Wind
+model <- phylolm(lma~wind, data=dat, phy=phy,model = "lambda", REML = FALSE)
+coef_model <- coef(model)  # Intercept and slope
+r2 <- summary(model)$r.squared  # R-squared
+p_value <- summary(model)$coefficients[2, 4]  # p-value for the slope
+
+# Create a text label with R² and p-value
+label_text <- paste0(
+  "R² = ", round(r2, 3), 
+  "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
+)
+
+lma_wind_plot <- ggplot(dat, aes(x = wind, y = lma)) +
+  geom_point(aes(color = lma), size = 2, alpha = 0.5) +
+  scale_color_viridis_c(option = "D", end = 0.85) +
+  geom_density_2d(color = "black", linewidth = 0.4) +  # Add contour lines
+  # Add a custom linear model trend line using the equation from `model`
+  geom_abline(
+    intercept = coef(model)[1], 
+    slope = coef(model)[2], 
+    color = "black", linetype = "dashed", linewidth = 1
+  ) +
+  # annotate(
+  #   "text", x = min(dat$wind) , y = 6.9, 
+  #   label = label_text, size = 5, hjust = 0, vjust = 1
+  # ) +
+  labs(
+    x = "Mean Annual Wind speed",
+    y = expression("log LMA " (g/m^2)),
+  ) +
+  theme_bw(base_size = 15) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
+    panel.grid.major = element_line(color = "grey85"),
+    legend.position = ""
+  ) +
+  ggtitle("")
+#-------------------------
+#-------------------------
+# Alt
+model <- phylolm(lma~alt, data=dat, phy=phy,model = "lambda", REML = FALSE)
+coef_model <- coef(model)  # Intercept and slope
+r2 <- summary(model)$r.squared  # R-squared
+p_value <- summary(model)$coefficients[2, 4]  # p-value for the slope
+
+# Create a text label with R² and p-value
+label_text <- paste0(
+  "R² = ", round(r2, 3), 
+  "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
+)
+
+lma_alt_plot <- ggplot(dat, aes(x = alt, y = lma)) +
+  geom_point(aes(color = lma), size = 2, alpha = 0.5) +
+  scale_color_viridis_c(option = "D", end = 0.85) +
+  geom_density_2d(color = "black", linewidth = 0.4) +  # Add contour lines
+  # Add a custom linear model trend line using the equation from `model`
+  geom_abline(
+    intercept = coef(model)[1], 
+    slope = coef(model)[2], 
+    color = "black", linetype = "dashed", linewidth = 1
+  ) +
+  # annotate(
+  #   "text", x = min(dat$wind) , y = 6.9, 
+  #   label = label_text, size = 5, hjust = 0, vjust = 1
+  # ) +
+  labs(
+    x = "Elevation (m)",
+    y = expression("log LMA " (g/m^2)),
+  ) +
+  theme_bw(base_size = 15) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
+    panel.grid.major = element_line(color = "grey85"),
+    legend.position = ""
+  ) +
+  ggtitle("")
+#-------------------------
+pdf("FIGURES/plot_for_figure4a.pdf" ,height=12,width=15)
+grid.arrange(lma_bio_2_plot,
+             lma_bio_5_plot,
+             lma_bio_15_plot,
+             lma_bio_18_plot,
+             lma_bio_19_plot,
+             lma_srad_plot,
+             lma_ai_plot, 
+             lma_wind_plot,
+             lma_alt_plot,
+             ncol=3, nrow = 3)
+dev.off()
+###
+
+#lma_bio_3_plot
 
