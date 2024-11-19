@@ -3,8 +3,7 @@ Call:
 model.avg(object = model_set, subset = delta < 2)
 
 Component model call: 
-phylolm(formula = lma ~ <11 unique rhs>, data = data_subset, phy = phy, model = 
-     lambda, REML = FALSE)
+phylolm(formula = lma ~ <11 unique rhs>, data = data_subset, phy = phy, model = lambda, REML = FALSE)
 
 Component models: 
                  df  logLik   AICc delta weight
