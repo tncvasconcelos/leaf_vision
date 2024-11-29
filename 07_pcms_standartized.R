@@ -199,8 +199,9 @@ aggregate(data_subset$lma, by = list(data_subset$deciduousness), mean)
 # Summary of the model
 summary(full_model)
 coef_summary <- summary(full_model)$coefficients
-saveRDS(full_model, file = "models/full_model_07b_lp.rds")
-write.csv(coef_summary, file = "tables/model_coefficients_07b_lp.csv", row.names = TRUE)
+write.tree(phy, file = "trees/phy_070a_lp.tre")
+saveRDS(full_model, file = "models/full_model_07a_lp.rds")
+write.csv(coef_summary, file = "tables/model_coefficients_07a_lp.csv", row.names = TRUE)
 
 ## DATA DREDGE REGRESSION
 # Load MuMIn package for model selection
