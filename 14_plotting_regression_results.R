@@ -8,6 +8,10 @@ setwd("~/leaf_vision/")
 full_model <- readRDS(file = "models/full_model_07b.rds")
 model_set <- readRDS(file = "models/model_set_07b.rds")
 
+# sink("full_model_unstandartized.txt")
+# summary(full_model)
+# sink()
+
 ## MODEL AVG REGRESSION
 # Model averaging of top models within 2 AICc units
 model_avg <- model.avg(model_set, subset = delta < 2)
@@ -21,16 +25,12 @@ importance_values <- sw(model_avg)
 importance_values <- importance_values[coef_data$Term]
 coef_data$importance_values <- importance_values
 
-coef_data$Term <- c("Aridity Index",
-                             "Diurnal Temp. Range",
-                             "Max Temp. Warmest Month",
+coef_data$Term <- c("Mean Annual Temperature",
+                             "Mean Annual Precipitation",
+                             "Temperature Seasonality",
                              "Solar Radiation",
-                             "Wind Speed",
-                             "Prec. Coldest Month",
-                             "Prec. Seasonality",
-                             "Prec. Warmest Month",
-                             "Elevation",
-                             "bio_3")
+                             "Mean Wind Speed",
+                             "Aridity Index")
 
 colnames(coef_data)[4] <-"p_value"
 colnames(coef_data)[2] <-"Std_Error"
@@ -75,7 +75,7 @@ coef_plot <- ggplot(coef_data_filtered, aes(x = Term, y = Estimate, color = colo
 
 # Importance values bar plot
 importance_plot <- ggplot(coef_data_filtered, aes(x = Term, y = importance_values)) +
-  geom_bar(stat = "identity", fill = "grey60") +
+  geom_bar(stat = "identity", fill = "orange", col="white", size=2.5) +
   labs(title = "", x = "", y = "Importance Value") +
   theme_bw(base_size = 14) +
   theme(

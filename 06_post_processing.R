@@ -339,7 +339,6 @@ for(i in 1:nrow(merged_dataset)) {
 # }
 
 
-
 #spot_check <- merged_dataset[,c("genus_species","biome","deciduousness")]
 #write.csv(spot_check, file="spot_check_deciduousness.csv", row.names=F)
 library(BIEN)
@@ -407,9 +406,14 @@ merged_dataset <- merge(as.data.frame(merged_dataset), all_pheno_data, by.x="gen
 #---------------------------------------
 # Save point
 # write.csv(merged_dataset, file="data/merged_dataset_final.csv", row.names=F)
-# merged_dataset <- fread("data/merged_dataset.csv")
+# merged_dataset <- fread("data/merged_dataset_final.csv")
 #---------------------------------------
-
+merged_dataset <- subset(merged_dataset, !is.na(merged_dataset$area))
+merged_dataset <- merged_dataset[,c("component_name","filename","gbif_id","conversion_mean","predicted_conversion_factor_cm",
+                    "genus_species","family","area","petiole_width","LMA","lat", "lon",
+                    "eco_name","biome","bio_1","bio_4","bio_12", "bio_15","ai",
+                    "wind","srad","leaf_phenology")]
+write.csv(merged_dataset, file="full_data_results.csv")
 #boxplot(merged_dataset$LMA~merged_dataset$biome, las=2, horizontal=T)
 
 #boxplot(spot_check$LMA~spot_check$leaf_phenology)
@@ -420,3 +424,5 @@ write.csv(subset_to_check[,c("genus_species","leaf_phenology")], file="subset_to
 # merged_dataset_original <- as.data.frame(merged_dataset_original)[,c(1,70:ncol(merged_dataset_original))]
 # merged_dataset_test <- merge(merged_dataset, merged_dataset_original, by="component_name", all=T)
 # merged_dataset_test <- subset(merged_dataset_test, !is.na(merged_dataset_test$bio_1))
+
+

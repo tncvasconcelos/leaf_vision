@@ -1,0 +1,33 @@
+
+Call:
+phylolm(formula = formula_full, data = data_subset, phy = phy, 
+    model = "lambda", REML = FALSE)
+
+   AIC logLik 
+ 779.9 -379.9 
+
+Raw residuals:
+     Min       1Q   Median       3Q      Max 
+-1.63878 -0.14147  0.03216  0.21283  1.65020 
+
+Mean tip height: 139.3956
+Parameter estimate(s) using ML:
+lambda : 0.4456685
+sigma2: 0.0008843848 
+
+Coefficients:
+               Estimate      StdErr t.value   p.value    
+(Intercept)  4.4684e-01  1.2216e-01  3.6578 0.0002628 ***
+bio_1       -1.5427e-02  2.6035e-03 -5.9256 3.815e-09 ***
+bio_12      -3.9224e-05  3.6366e-05 -1.0786 0.2809334    
+bio_4       -1.9958e-04  5.2051e-05 -3.8343 0.0001309 ***
+bio_15       1.2593e-04  3.7814e-04  0.3330 0.7391678    
+wind         1.4266e-02  1.0216e-02  1.3964 0.1627896    
+srad         2.0959e-05  6.1870e-06  3.3876 0.0007224 ***
+ai          -3.0508e-06  4.7184e-06 -0.6466 0.5180043    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+R-squared: 0.06932	Adjusted R-squared: 0.06518 
+
+Note: p-values and R-squared are conditional on lambda=0.4456685.

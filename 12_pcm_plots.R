@@ -9,6 +9,7 @@ library(data.table)
 load("results/data_subset_for_plots.Rsave")
 dat$lma <- log((exp(dat$lma) * 100))
 
+
 #--------------------------
 # BIO2
 model <- phylolm(lma~bio_2, data=dat, phy=phy, model = "lambda", REML = FALSE)

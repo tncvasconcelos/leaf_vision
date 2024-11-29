@@ -127,6 +127,7 @@ library(phylolm)
 # # Get the proportion of variance explained
 # cumsum(summary(pca_res)$importance[2, ])
 
+
 reduced_vars <- c( "bio_1" , "bio_12" ,"bio_4","bio_15", "wind", "srad" , "ai")
 
 ## FULL PHYLO REGRESSION
@@ -147,6 +148,7 @@ library(MuMIn)
 
 # Perform model selection
 model_set <- dredge(full_model, trace = TRUE, rank = "AICc")
+write.csv(round(as.data.frame(model_set),3), file="model_set_standartized.csv")
 saveRDS(model_set, file = "models/model_set_07b.rds")
 model_set <- readRDS(file = "models/model_set_07b.rds")
 
