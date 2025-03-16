@@ -1,6 +1,7 @@
 # Post-processing results from LM2
 # rm(list=ls())
 # setwd("~/Desktop/leaf_computer_vision")
+# setwd("leaf_vision/")
 library(data.table)
 library(raster)
 library(geodata)

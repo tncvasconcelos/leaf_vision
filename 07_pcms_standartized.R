@@ -5,6 +5,7 @@ library(geiger)
 library(phytools)
 library(scales)
 library(RColorBrewer)
+library(phytools)
 
 setwd("~/leaf_vision/")
 
