@@ -1,5 +1,6 @@
 Codes used in the analyses of the manuscript:  
 Automated extraction of leaf economic traits from digitized herbarium specimens (submitted) 
+  
 Authors: Thais Vasconcelos, Will Weaver, Aly Baumgartner, Zoe Bugnaski, James Boyko 
 
 ----
@@ -34,13 +35,13 @@ Some results from correlation analyses.
 ----
 Scripts:
 
-> 01_list_of_woody_dicots.R
+> 01_list_of_woody_dicots.R  
 Creates a list of woody, non-monocot angiosperm species based on the World Checklist of Vascular Plants (WCVP) dataset. It begins by loading two supporting datasets: one with families to exclude (monocots, gymnosperms, and ferns/lycophytes) and another for life form mapping. The script merges the WCVP distribution and names tables, filters for accepted species-level records, and excludes unwanted plant groups. It then assigns life form categories, identifies woody perennials, and removes hybrids. 
   
-> 02_first_pass.R
+> 02_first_pass.R  
 Identifies woody dicot species from the list created in *01_list_of_woody_dicots.R* that have at least 10 imaged specimens with valid coordinates on GBIF. It uses the mvh package to search GBIF for specimen metadata, iterating through each species and saving the results in a list. The script then checks how many specimens each species has with valid coordinates, keeping only those with 10 or more records. The final list of target taxa is exported as a .csv file.
   
-> 03_pruning_tree.R
+> 03_pruning_tree.R  
 Prunes a large phylogenetic tree (Smith & Brown, 2018) to include only the woody dicot species with at least 10 imaged specimens with valid coordinates on GBIF resulting from script *02_first_pass.R*. It loads the original tree (taxized_GBMB.Rdata) and the list of target species, then uses the ape package to keep only the matching species. The pruned tree is saved in newick format, and a reference table (ref_table.Rsave) is created to map the original taxized tree tip labels to the newick-formatted labels
   
   
