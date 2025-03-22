@@ -44,22 +44,15 @@ Identifies woody dicot species from the list created in *01_list_of_woody_dicots
 > 03_pruning_tree.R  
 Prunes a large phylogenetic tree (Smith & Brown, 2018) to include only the woody dicot species with at least 10 imaged specimens with valid coordinates on GBIF resulting from script *02_first_pass.R*. It loads the original tree (taxized_GBMB.Rdata) and the list of target species, then uses the ape package to keep only the matching species. The pruned tree is saved in newick format, and a reference table (ref_table.Rsave) is created to map the original taxized tree tip labels to the newick-formatted labels
   
+> 04_focal_sample_of_woody_dicots.R  
+Reads a phylogenetic tree, applies pre-calculated phylogenetic weights, randomly samples 2000 species in a phylogenetically balanced way, and visualizes the selected taxa on the tree. It then saves the sample as a CSV file.
+
+> 05_specimen_image_download.R  
+Downloads herbarium specimen images for a list of target species, prioritizing high-quality and relevant specimens based on geographic, temporal, and institutional preferences. It filters and scores the metadata, downloads up to 5 images per species, checks for image quality (removing low-resolution ones), and saves the images and metadata into organized folders.
   
-> 03_extracting_env_means.R
-
-
-> 04_spatial_corr_biome_vars.R
-
-
-> 05_spatial_corr_env_vars.R
-
-
-> 06_spatial_corr_biome_interaction.R
-
-
-> 07_spatial_corr_env_vars_interaction.R
-
-
+> 06_post_processing.R  
+Processes Leaf Machine output by cleaning and merging it with petiole width data, calculates LMA, removes outliers, verifies geographic accuracy, and enriches the dataset with biome and environmental variables for further analysis.  
+  
 
 ----
   
