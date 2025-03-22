@@ -1,5 +1,5 @@
 Codes used in the analyses of the manuscript:  
-Automated extraction of leaf economic traits from digitized herbarium specimens (submitted) 
+Automated extraction of leaf mass per area from digitized herbarium specimens (submitted) 
   
 Authors: Thais Vasconcelos, Will Weaver, Aly Baumgartner, Zoe Bugnaski, James Boyko 
 
