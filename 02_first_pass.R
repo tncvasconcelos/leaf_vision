@@ -1,6 +1,5 @@
 # Checking which species have at least 10 imaged specimens with valid coordinates on GBIF
 # rm(list=ls())
-# setwd("~/leaf_computer_vision")
 library(mvh)
 
 #-----------------------------
@@ -33,7 +32,5 @@ for(i in 1:length(list_metadata)) {
 # This is the target list of taxa
 write.csv(taxa_to_analyze, file="supporting_datasets/taxa_to_analyze.csv", row.names = F)
 
-# filtered_list <- list_metadata
-# filtered_list[nrows<10] <- NULL
 # save(filtered_list, file="supporting_datasets/filtered_list.Rsave") # saving the original metadata too just in case
 

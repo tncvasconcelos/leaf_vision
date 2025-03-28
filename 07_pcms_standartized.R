@@ -7,7 +7,7 @@ library(scales)
 library(RColorBrewer)
 library(phytools)
 
-setwd("~/leaf_vision/")
+#setwd("~/leaf_vision/")
 
 merged_dataset <- read.csv("data/merged_dataset_final.csv")
 merged_dataset$genus_species <- gsub(" ", "_", merged_dataset$genus_species)

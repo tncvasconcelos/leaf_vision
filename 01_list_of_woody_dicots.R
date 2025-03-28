@@ -1,18 +1,16 @@
 # Creating a list of woody non-monocot angiosperms
 # rm(list=ls())
-# setwd("~/leaf_computer_vision")
-
 families_to_exclude <- read.csv("supporting_datasets/families_to_exclude.csv")
 life_form_scoring <- read.csv("supporting_datasets/lifeform_mapping.csv")
 
-# Produce list of species to search:
+# Producing list of species to search:
 #-----------------------------
 # Load WCVP dataset
 dist_sample <- read.table("wcvp/wcvp_distribution.txt", sep="|", header=TRUE, quote = "", fill=TRUE, encoding = "UTF-8")
 names_sample <- read.table("wcvp/wcvp_names.txt", sep="|", header=TRUE, quote = "", fill=TRUE, encoding = "UTF-8")
 
 #-----------------------------
-# Merge them in one big table
+# Merging them in one big table
 all_vars <- merge(dist_sample, names_sample, by="plant_name_id")
 all_vars <- subset(all_vars, all_vars$taxon_rank=="Species")
 all_vars <- subset(all_vars, all_vars$taxon_status=="Accepted")
@@ -20,8 +18,6 @@ all_vars <- subset(all_vars, all_vars$taxon_status=="Accepted")
 # Excluding monocots, gymno and ferns/lycophytes
 all_vars <- subset(all_vars, !all_vars$family%in%families_to_exclude$families_to_exclude)
 
-#length(unique(all_vars$taxon_name))
-#length(unique(all_vars$family))
 #-----------------------------
 # Filter to get just woody dicots
 life_form_scoring <- rbind(life_form_scoring, c("",""))
@@ -35,8 +31,9 @@ for(i in 1:length(life_forms$lifeform_description)) {
 }
 woody_species <- subset(life_forms, life_forms$life_form=="woody perennial")
 woody_species <- subset(woody_species, !grepl(" × ", woody_species$taxon_name)) # remove hybrids
-write.csv(woody_species, file="supporting_datasets/woody_species_full_table.csv", row.names = F)
 
+# Saving results
+write.csv(woody_species, file="supporting_datasets/woody_species_full_table.csv", row.names = F)
 woody_species <- woody_species[,c(11:27,31:36)] # keep only relevant columns
 write.csv(woody_species, file="supporting_datasets/woody_species.csv", row.names = F)
 

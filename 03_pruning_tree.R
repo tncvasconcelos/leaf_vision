@@ -1,6 +1,5 @@
 # Pruning Smith and Brown (2018) molecular tree to include only species that have at least 10 imaged specimens with valid coordinates
 # rm(list=ls())
-# setwd("~/leaf_computer_vision")
 
 #-----------------------------
 # Pruning tree to match list of species with 10 imaged specimens with valid coordinates
@@ -18,7 +17,3 @@ big_tree_pruned_original <- big_tree_pruned
 
 ref_table <- data.frame(taxized_names=big_tree_pruned_original$tip.label, newick_names=big_tree_pruned_newick$tip.label)
 save(ref_table, file="supporting_datasets/ref_table.Rsave")
-
-#-------
-#big_tree$tip.label <- gsub(" .*","",big_tree$tip.label)
-#genus_tree <- ape::drop.tip(big_tree, which(duplicated(big_tree$tip.label)))

@@ -268,20 +268,20 @@ dev.off()
 
 
 #-------------------------------
-load("results/data_subset_w_leaf_phenology.Rsave")
-data_subset$lma <- exp(data_subset$lma)*100
-
-median(data_subset$lma[data_subset$deciduousness=="evergreen"])
-median(data_subset$lma[data_subset$deciduousness=="deciduous"])
-
-
-pdf("FIGURES/boxplot_deciduousness.pdf", height=3, width=6)
-ggplot(data_subset, aes(x = deciduousness, y = lma, fill = deciduousness)) +
-  geom_boxplot(outlier.shape = NA, width = 0.6) +  # Box plot without outliers
-  geom_jitter(aes(color = deciduousness), width = 0.2, size = 1.5, alpha = 0.3) +  # Jitter points with matching color and increased transparency
-  theme_bw() +
-  labs(x = "Deciduousness", y = "LMA") +
-  scale_fill_manual(values = c("evergreen" = "darkgreen", "deciduous" = "orange")) +  # Custom fill colors
-  scale_color_manual(values = c("evergreen" = "darkgreen", "deciduous" = "orange")) +  # Matching color for jitter points
-  theme(legend.position = "none")  # Remove legend if not needed
-dev.off()
+# load("results/data_subset_w_leaf_phenology.Rsave")
+# data_subset$lma <- exp(data_subset$lma)*100
+# 
+# median(data_subset$lma[data_subset$deciduousness=="evergreen"])
+# median(data_subset$lma[data_subset$deciduousness=="deciduous"])
+# 
+# 
+# pdf("FIGURES/boxplot_deciduousness.pdf", height=3, width=6)
+# ggplot(data_subset, aes(x = deciduousness, y = lma, fill = deciduousness)) +
+#   geom_boxplot(outlier.shape = NA, width = 0.6) +  # Box plot without outliers
+#   geom_jitter(aes(color = deciduousness), width = 0.2, size = 1.5, alpha = 0.3) +  # Jitter points with matching color and increased transparency
+#   theme_bw() +
+#   labs(x = "Deciduousness", y = "LMA") +
+#   scale_fill_manual(values = c("evergreen" = "darkgreen", "deciduous" = "orange")) +  # Custom fill colors
+#   scale_color_manual(values = c("evergreen" = "darkgreen", "deciduous" = "orange")) +  # Matching color for jitter points
+#   theme(legend.position = "none")  # Remove legend if not needed
+# dev.off()

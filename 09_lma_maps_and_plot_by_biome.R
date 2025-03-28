@@ -8,7 +8,8 @@ library(rnaturalearthdata)
 library(dplyr)
 
 setwd("~/leaf_vision/")
-
+#--------------------------------
+# Plotting LMA and density of points
 merged_dataset <- read.csv("data/merged_dataset.csv")
 merged_dataset$LMA <- merged_dataset$LMA*100
 
@@ -67,6 +68,7 @@ grid.arrange(mean_lma_map, n_points_map, ncol=1, nrow = 2)
 dev.off()
 
 #------------------
+
 # VIOLIN PLOTS PER BIOME
 
 # Filter dataset and remove biomes with fewer than 100 observations

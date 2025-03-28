@@ -82,10 +82,11 @@ results_list <- mclapply(1:nrow(merged_dataset), function(i) {
   }
   
   calculate_individual_lma_with_ci(merged_dataset[i,])
-}, mc.cores = 10)
+}, mc.cores = 4)
 
 # saveRDS(results_list, file = "intermediate_datasets/ci_results_list.RDS")
-results_list <- readRDS("intermediate_datasets/ci_results_list.RDS")
+results_list <- readRDS("ci_results_list.RDS")
+
 # Extract results into a data frame
 output <- data.frame(
   specimen_id = merged_dataset$component_name, 

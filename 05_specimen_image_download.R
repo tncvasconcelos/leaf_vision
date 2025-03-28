@@ -1,9 +1,5 @@
 # Downloading herbarium specimens
 # rm(list=ls())
-# setwd("~/leaf_computer_vision")
-
-setwd("/Users/tvasc/Desktop/leaf_computer_vision")
-# rm(list=ls())
 library(mvh)
 
 #-----------------------------

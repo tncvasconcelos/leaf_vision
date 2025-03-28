@@ -1,7 +1,5 @@
 # Creating phylogenetically balanced "random" sample of species
 # rm(list=ls())
-# setwd("~/leaf_computer_vision")
-
 library(ape)
 
 phy <- phytools::read.newick("supporting_datasets/big_tree_pruned.tre")
@@ -25,6 +23,7 @@ weights <- readRDS("supporting_datasets/weights.rds")
 prelim_taxa_sample <- sample(names(weights), size = 2000, replace = FALSE, prob = weights)
 write.csv(prelim_taxa_sample, "final_taxa_sample.csv")
 
+# Checking which species were sampled
 par(mar=c(.1,.1,.1,.1))
 plot(phy, show.tip.label = FALSE, type="fan")
 tiplabels(pch = 16, col = "red", tip = match(prelim_taxa_sample, phy$tip.label), offset = 5)

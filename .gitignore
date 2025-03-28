@@ -74,3 +74,5 @@ data/Petiole_Visualizations/
 manuscript/
 R1/
 virtual_herbarium_NPleafPaper.zip
+ci_results_list.RDS
+merged_dataset_final.csv
