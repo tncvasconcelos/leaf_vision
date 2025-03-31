@@ -7,145 +7,59 @@ library(dplyr)
 library(gridExtra)
 library(data.table)
 library(lmtest)
+library(geomorph)
 
 # setwd("~/leaf_vision/")
-load("results/data_subset_for_plots.Rsave")
-dat$lma <- log((exp(dat$lma) * 100))
-phy <- multi2di(phy)
+# dat <- read.csv("data/merged_dataset_final.csv")
+# load("results/data_subset_for_plots.Rsave")
+# dat$lma <- log((exp(dat$lma) * 100))
+# phy <- multi2di(phy)
+# phy <- force.ultrametric(phy)
+
+merged_dataset <- read.csv("data/merged_dataset_final.csv")
+merged_dataset$genus_species <- gsub(" ", "_", merged_dataset$genus_species)
+merged_dataset <- merged_dataset[!is.na(merged_dataset$genus_species),]
+tre <- read.tree("trees/GBMB.tre")
+missing_sp <- unique(merged_dataset$genus_species)[!unique(merged_dataset$genus_species) %in% tre$tip.label]
+dat <- merged_dataset[!merged_dataset$genus_species %in% missing_sp,]
+phy <- keep.tip(tre, tre$tip.label[tre$tip.label %in% dat$genus_species])
 phy <- force.ultrametric(phy)
+phy$node.label <- NULL
 
 #--------------------------
 # BIO1
-x <- setNames(dat$bio_1, dat$sp)
-y <- setNames(dat$lma, dat$sp)
-Vx <- setNames(dat$bio_1_se, dat$sp)
-Vy <- setNames(dat$se, dat$sp)
-Vx[is.na(Vx)] <- mean(Vx, na.rm = TRUE)
-Vy[is.na(Vy)] <- mean(Vy, na.rm = TRUE)
-Cxy=setNames(rep(0, Ntip(phy)), dat$sp)
+tmp <- data.frame(aggregate(cbind(dat$LMA, dat$bio_1), list(dat$filename, dat$genus_species), 
+  function(x) c(mean(x), mean(log(x)))))
+bio1_dat <- data.frame(sp = tmp$Group.2, bio_1 = tmp$V2[,1], lma = log(exp(tmp$V1[,2])*100))
+model <- extended.pgls(
+  lma ~ bio1,
+  phy = phy,
+  Cov = NULL,
+  species = "sp",
+  delta = 0.001,
+  gamma = c("sample", "equal"),
+  iter = 999,
+  seed = NULL,
+  int.first = FALSE,
+  turbo = FALSE,
+  Parallel = FALSE,
+  verbose = FALSE,
+  data = bio1_dat,
+  print.progress = TRUE
+)
+save(model, file="bio1_extd_extd_model.Rsave")
 
-# assessing the likelihood of a slope fixed in 0 and comparing the likelihood to get a p value
-model0 <- pgls.Ives(tree = phy, X = x, y = y, Vx = Vx, Vy = Vy, Cxy = Cxy, fixed.b1 = 0)
-model1 <- pgls.Ives(tree = phy, X = x, y = y, Vx = Vx, Vy = Vy, Cxy = Cxy)
-save(model0, file="bio1_pgls_ives_model0.Rsave")
-save(model1, file="bio1_pgls_ives_model1.Rsave")
+load(file="bio1_extd_extd_model.Rsave")
+lrtest_bio1 <- anova(model)
+coef_model <- coef(model)
+p_value <- lrtest_bio1$table$`Pr(>F)`[1]
 
-#--------------------------
-# BIO12
-x <- setNames(dat$bio_12, dat$sp)
-y <- setNames(dat$lma, dat$sp)
-Vx <- setNames(dat$bio_12_se, dat$sp)
-Vy <- setNames(dat$se, dat$sp)
-Vx[is.na(Vx)] <- mean(Vx, na.rm = TRUE)
-Vy[is.na(Vy)] <- mean(Vy, na.rm = TRUE)
-Cxy=setNames(rep(0, Ntip(phy)), dat$sp)
-
-# assessing the likelihood of a slope fixed in 0 and comparing the likelihood to get a p value
-model0 <- pgls.Ives(tree = phy, X = x, y = y, Vx = Vx, Vy = Vy, Cxy = Cxy, fixed.b1 = 0)
-model1 <- pgls.Ives(tree = phy, X = x, y = y, Vx = Vx, Vy = Vy, Cxy = Cxy)
-save(model0, file="bio12_pgls_ives_model0.Rsave")
-save(model1, file="bio12_pgls_ives_model1.Rsave")
-
-#--------------------------
-# Solar radiation
-x <- setNames(dat$srad, dat$sp)
-y <- setNames(dat$lma, dat$sp)
-Vx <- setNames(dat$srad_se, dat$sp)
-Vy <- setNames(dat$se, dat$sp)
-Vx[is.na(Vx)] <- mean(Vx, na.rm = TRUE)
-Vy[is.na(Vy)] <- mean(Vy, na.rm = TRUE)
-Cxy=setNames(rep(0, Ntip(phy)), dat$sp)
-
-# assessing the likelihood of a slope fixed in 0 and comparing the likelihood to get a p value
-model0 <- pgls.Ives(tree = phy, X = x, y = y, Vx = Vx, Vy = Vy, Cxy = Cxy, fixed.b1 = 0)
-model1 <- pgls.Ives(tree = phy, X = x, y = y, Vx = Vx, Vy = Vy, Cxy = Cxy)
-save(model0, file="srad_pgls_ives_model0.Rsave")
-save(model1, file="srad_pgls_ives_model1.Rsave")
-
-
-#--------------------------
-# BIO4
-x <- setNames(dat$bio_4, dat$sp)
-y <- setNames(dat$lma, dat$sp)
-Vx <- setNames(dat$bio_4_se, dat$sp)
-Vy <- setNames(dat$se, dat$sp)
-Vx[is.na(Vx)] <- mean(Vx, na.rm = TRUE)
-Vy[is.na(Vy)] <- mean(Vy, na.rm = TRUE)
-Cxy=setNames(rep(0, Ntip(phy)), dat$sp)
-
-# assessing the likelihood of a slope fixed in 0 and comparing the likelihood to get a p value
-model0 <- pgls.Ives(tree = phy, X = x, y = y, Vx = Vx, Vy = Vy, Cxy = Cxy, fixed.b1 = 0)
-model1 <- pgls.Ives(tree = phy, X = x, y = y, Vx = Vx, Vy = Vy, Cxy = Cxy)
-save(model0, file="bio4_pgls_ives_model0.Rsave")
-save(model1, file="bio4_pgls_ives_model1.Rsave")
-
-
-#--------------------------
-# BIO15
-x <- setNames(dat$bio_15, dat$sp)
-y <- setNames(dat$lma, dat$sp)
-Vx <- setNames(dat$bio_15_se, dat$sp)
-Vy <- setNames(dat$se, dat$sp)
-Vx[is.na(Vx)] <- mean(Vx, na.rm = TRUE)
-Vy[is.na(Vy)] <- mean(Vy, na.rm = TRUE)
-Cxy=setNames(rep(0, Ntip(phy)), dat$sp)
-
-# assessing the likelihood of a slope fixed in 0 and comparing the likelihood to get a p value
-model0 <- pgls.Ives(tree = phy, X = x, y = y, Vx = Vx, Vy = Vy, Cxy = Cxy, fixed.b1 = 0)
-model1 <- pgls.Ives(tree = phy, X = x, y = y, Vx = Vx, Vy = Vy, Cxy = Cxy)
-save(model0, file="bio15_pgls_ives_model0.Rsave")
-save(model1, file="bio15_pgls_ives_model1.Rsave")
-
-
-#--------------------------
-# Wind speed
-x <- setNames(dat$wind, dat$sp)
-y <- setNames(dat$lma, dat$sp)
-Vx <- setNames(dat$wind_se, dat$sp)
-Vy <- setNames(dat$se, dat$sp)
-Vx[is.na(Vx)] <- mean(Vx, na.rm = TRUE)
-Vy[is.na(Vy)] <- mean(Vy, na.rm = TRUE)
-Cxy=setNames(rep(0, Ntip(phy)), dat$sp)
-
-# assessing the likelihood of a slope fixed in 0 and comparing the likelihood to get a p value
-model0 <- pgls.Ives(tree = phy, X = x, y = y, Vx = Vx, Vy = Vy, Cxy = Cxy, fixed.b1 = 0)
-model1 <- pgls.Ives(tree = phy, X = x, y = y, Vx = Vx, Vy = Vy, Cxy = Cxy)
-save(model0, file="wind_pgls_ives_model0.Rsave")
-save(model1, file="wind_pgls_ives_model1.Rsave")
-
-
-#--------------------------
-# AI
-x <- setNames(dat$ai, dat$sp)
-y <- setNames(dat$lma, dat$sp)
-Vx <- setNames(dat$ai_se, dat$sp)
-Vy <- setNames(dat$se, dat$sp)
-Vx[is.na(Vx)] <- mean(Vx, na.rm = TRUE)
-Vy[is.na(Vy)] <- mean(Vy, na.rm = TRUE)
-Cxy=setNames(rep(0, Ntip(phy)), dat$sp)
-
-# assessing the likelihood of a slope fixed in 0 and comparing the likelihood to get a p value
-model0 <- pgls.Ives(tree = phy, X = x, y = y, Vx = Vx, Vy = Vy, Cxy = Cxy, fixed.b1 = 0)
-model1 <- pgls.Ives(tree = phy, X = x, y = y, Vx = Vx, Vy = Vy, Cxy = Cxy)
-save(model0, file="ai_pgls_ives_model0.Rsave")
-save(model1, file="ai_pgls_ives_model1.Rsave")
-
-
-
-
-
-lrtest_bio1 <- lrtest(model0,model1) 
-#------------------------------------
-coef_model <- model1$beta # Intercept and slope
-p_value <- lrtest_bio1$`Pr(>Chisq)`[2] # p-value for the slope
-
-coef(model)
 # Create a text label with R² and p-value
 label_text <- paste0(
   "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
 )
 
-lma_bio_1_plot <- ggplot(dat, aes(x = bio_1, y = lma)) +
+lma_bio_1_plot <- ggplot(bio1_dat, aes(x = bio_1, y = lma)) +
   geom_point(aes(color = lma), size = 2, alpha = 0.5) +
   geom_density_2d(color = "black", linewidth = 0.4) +  # Add contour lines
   scale_color_viridis_c(option = "D", end = 0.85) +
@@ -154,12 +68,67 @@ lma_bio_1_plot <- ggplot(dat, aes(x = bio_1, y = lma)) +
     slope = coef_model[2],
     color = "black", linetype = "dashed", linewidth = 1
   ) +
-  # annotate(
-  #   "text", x = min(dat$bio_2), y = 6.9,
-  #   label = label_text, size = 5, hjust = 0, vjust = 1
-  # ) +
   labs(
     x = "Mean Diurnal Range",
+    y = expression("log LMA " (g/m^2))
+  ) +
+  # annotate(
+  #   "text", x = min(dat$wind) , y = 6.9, 
+  #   label = label_text, size = 5, hjust = 0, vjust = 1
+  # ) +
+  theme_bw(base_size = 15) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
+    panel.grid.major = element_line(color = "grey85"),
+    legend.position = ""
+  ) +
+  ggtitle("")
+
+
+#--------------------------
+# BIO12
+tmp <- data.frame(aggregate(cbind(dat$LMA, dat$bio_12), list(dat$filename, dat$genus_species), 
+  function(x) c(mean(x), mean(log(x)))))
+bio12_dat <- data.frame(sp = tmp$Group.2, bio_12 = tmp$V2[,1], lma = log(exp(tmp$V1[,2])*100))
+model <- extended.pgls(
+  lma ~ bio_12,
+  phy = phy,
+  Cov = NULL,
+  species = "sp",
+  delta = 0.001,
+  gamma = c("sample", "equal"),
+  iter = 999,
+  seed = NULL,
+  int.first = FALSE,
+  turbo = FALSE,
+  Parallel = FALSE,
+  verbose = FALSE,
+  data = bio12_dat,
+  print.progress = TRUE
+)
+save(model, file="bio12_extd_ives_model.Rsave")
+
+load(file="bio12_extd_ives_model.Rsave")
+lrtest_bio12 <- anova(model)
+coef_model <- coef(model)
+p_value <- lrtest_bio12$table$`Pr(>F)`[1]
+
+# Create a text label with p-value
+label_text <- paste0(
+  "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
+)
+
+lma_bio_12_plot <- ggplot(bio12_dat, aes(x = bio_12, y = lma)) +
+  geom_point(aes(color = lma), size = 2, alpha = 0.5) +
+  geom_density_2d(color = "black", linewidth = 0.4) +  # Add contour lines
+  scale_color_viridis_c(option = "D", end = 0.85) +
+  geom_abline(
+    intercept = coef_model[1],
+    slope = coef_model[2],
+    color = "black", linetype = "dashed", linewidth = 1
+  ) +
+  labs(
+    x = "Annual Precipitation",
     y = expression("log LMA " (g/m^2))
   ) +
   theme_bw(base_size = 15) +
@@ -171,269 +140,50 @@ lma_bio_1_plot <- ggplot(dat, aes(x = bio_1, y = lma)) +
   ggtitle("")
 
 #--------------------------
-# BIO3
-model <- phylolm(lma~bio_1, data=dat, phy=phy, model = "lambda", REML = FALSE)
-model <- phylolm(lma~bio_1, data=dat, phy=phy, sigma2=dat$se)
+# Solar radiation
+tmp <- data.frame(aggregate(cbind(dat$LMA, dat$srad), list(dat$filename, dat$genus_species), 
+  function(x) c(mean(x), mean(log(x)))))
+srad_dat <- data.frame(sp = tmp$Group.2, srad = tmp$V2[,1], lma = log(exp(tmp$V1[,2])*100))
+model <- extended.pgls(
+  lma ~ srad,
+  phy = phy,
+  Cov = NULL,
+  species = "sp",
+  delta = 0.001,
+  gamma = c("sample", "equal"),
+  iter = 999,
+  seed = NULL,
+  int.first = FALSE,
+  turbo = FALSE,
+  Parallel = FALSE,
+  verbose = FALSE,
+  data = srad_dat,
+  print.progress = TRUE
+)
+save(model, file="srad_extd_ives_model.Rsave")
 
-coef_model <- coef(model)  # Intercept and slope
-r2 <- summary(model)$r.squared  # R-squared
-p_value <- summary(model)$coefficients[2, 4]  # p-value for the slope
+load(file="srad_extd_ives_model.Rsave")
+lrtest_srad <- anova(model)
+coef_model <- coef(model)
+p_value <- lrtest_srad$table$`Pr(>F)`[1]
 
-# Create a text label with R² and p-value
+# Create a text label with p-value
 label_text <- paste0(
-  "R² = ", round(r2, 3), 
   "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
 )
 
-lma_bio_3_plot <- ggplot(dat, aes(x = bio_1, y = lma)) +
-  geom_errorbar(aes(ymin = lma - se, ymax = lma + se), 
-                width = 0, color = "gray50", alpha = 0.5) +   # Vertical error bars
-  geom_errorbarh(aes(xmin = bio_1 - bio_1_se, xmax = bio_1 + bio_1_se), 
-                 height = 0, color = "gray50", alpha = 0.5) + # Horizontal error bars
+lma_srad_plot <- ggplot(srad_dat, aes(x = srad, y = lma)) +
   geom_point(aes(color = lma), size = 2, alpha = 0.5) +
-  scale_color_viridis_c(option = "D", end = 0.85) +
   geom_density_2d(color = "black", linewidth = 0.4) +  # Add contour lines
-  # Add a custom linear model trend line using the equation from `model`
+  scale_color_viridis_c(option = "D", end = 0.85) +
   geom_abline(
-    intercept = coef(model)[1],
-    slope = coef(model)[2],
+    intercept = coef_model[1],
+    slope = coef_model[2],
     color = "black", linetype = "dashed", linewidth = 1
   ) +
- 
-  labs(
-    x = "Isothermality",
-    y = expression("log LMA " (g/m^2)),
-  ) +
-  theme_bw(base_size = 15) +
-  theme(
-    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
-    panel.grid.major = element_line(color = "grey85"),
-    legend.position = ""
-  ) +
-  ggtitle("")
-#-------------------------
-#-------------------------
-# BIO5
-model <- phylolm(lma~bio_5, data=dat, phy=phy,model = "lambda", REML = FALSE)
-coef_model <- coef(model)  # Intercept and slope
-r2 <- summary(model)$r.squared  # R-squared
-p_value <- summary(model)$coefficients[2, 4]  # p-value for the slope
-
-# Create a text label with R² and p-value
-label_text <- paste0(
-  "R² = ", round(r2, 3), 
-  "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
-)
-
-lma_bio_5_plot <- ggplot(dat, aes(x = bio_5, y = lma)) +
-  geom_point(aes(color = lma), size = 2, alpha = 0.5) +
-  scale_color_viridis_c(option = "D", end = 0.85) +
-  geom_density_2d(color = "black", linewidth = 0.4) +  # Add contour lines
-  # Add a custom linear model trend line using the equation from `model`
-  geom_abline(
-    intercept = coef(model)[1], 
-    slope = coef(model)[2], 
-    color = "black", linetype = "dashed", linewidth = 1
-  ) +
-  # annotate(
-  #   "text", x = min(dat$bio_5) , y = 6.9, 
-  #   label = label_text, size = 5, hjust = 0, vjust = 1
-  # ) +
-  labs(
-    x = "Max Temperature of the Warmest Month ",
-    y = expression("log LMA " (g/m^2)),
-  ) +
-  theme_bw(base_size = 15) +
-  theme(
-    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
-    panel.grid.major = element_line(color = "grey85"),
-    legend.position = ""
-  ) +
-  ggtitle("")
-#-------------------------
-# BIO15
-model <- phylolm(lma~bio_15, data=dat, phy=phy, model = "lambda", REML = FALSE)
-coef_model <- coef(model)  # Intercept and slope
-r2 <- summary(model)$r.squared  # R-squared
-p_value <- summary(model)$coefficients[2, 4]  # p-value for the slope
-
-# Create a text label with R² and p-value
-label_text <- paste0(
-  "R² = ", round(r2, 3), 
-  "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
-)
-
-lma_bio_15_plot <- ggplot(dat, aes(x = bio_15, y = lma)) +
-  geom_point(aes(color = lma), size = 2, alpha = 0.5) +
-  scale_color_viridis_c(option = "D", end = 0.85) +
-  geom_density_2d(color = "black", linewidth = 0.4) +  # Add contour lines
-  # Add a custom linear model trend line using the equation from `model`
-  geom_abline(
-    intercept = coef(model)[1],
-    slope = coef(model)[2],
-    color = "black", linetype = "dashed", linewidth = 1
-  ) +
-  # annotate(
-  #   "text", x = min(dat$bio_5) , y = 6.9, 
-  #   label = label_text, size = 5, hjust = 0, vjust = 1
-  # ) +
-  labs(
-    x = "Precipitation Seasonality ",
-    y = expression("log LMA " (g/m^2)),
-  ) +
-  theme_bw(base_size = 15) +
-  theme(
-    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
-    panel.grid.major = element_line(color = "grey85"),
-    legend.position = ""
-  ) +
-  ggtitle("")
-#-------------------------
-# BIO18
-model <- phylolm(lma~bio_18, data=dat, phy=phy,model = "lambda", REML = FALSE)
-coef_model <- coef(model)  # Intercept and slope
-r2 <- summary(model)$r.squared  # R-squared
-p_value <- summary(model)$coefficients[2, 4]  # p-value for the slope
-
-# Create a text label with R² and p-value
-label_text <- paste0(
-  "R² = ", round(r2, 3), 
-  "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
-)
-
-lma_bio_18_plot <- ggplot(dat, aes(x = bio_18, y = lma)) +
-  geom_point(aes(color = lma), size = 2, alpha = 0.5) +
-  scale_color_viridis_c(option = "D", end = 0.85) +
-  geom_density_2d(color = "black", linewidth = 0.4) +  # Add contour lines
-  # Add a custom linear model trend line using the equation from `model`
-  geom_abline(
-    intercept = coef(model)[1],
-    slope = coef(model)[2],
-    color = "black", linetype = "dashed", linewidth = 1
-  ) +
-  # annotate(
-  #   "text", x = min(dat$bio_5) , y =6.9, 
-  #   label = label_text, size = 5, hjust = 0, vjust = 1
-  # ) +
-  labs(
-    x = "Precipitation of Warmest Quarter",
-    y = expression("log LMA " (g/m^2)),
-  ) +
-  theme_bw(base_size = 15) +
-  theme(
-    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
-    panel.grid.major = element_line(color = "grey85"),
-    legend.position = ""
-  ) +
-  ggtitle("")
-#-------------------------
-# BIO19
-model <- phylolm(lma~bio_19, data=dat, phy=phy,model = "lambda", REML = FALSE)
-coef_model <- coef(model)  # Intercept and slope
-r2 <- summary(model)$r.squared  # R-squared
-p_value <- summary(model)$coefficients[2, 4]  # p-value for the slope
-
-# Create a text label with R² and p-value
-label_text <- paste0(
-  "R² = ", round(r2, 3), 
-  "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
-)
-
-lma_bio_19_plot <- ggplot(dat, aes(x = bio_19, y = lma)) +
-  geom_point(aes(color = lma), size = 2, alpha = 0.5) +
-  scale_color_viridis_c(option = "D", end = 0.85) +
-  geom_density_2d(color = "black", linewidth = 0.4) +  # Add contour lines
-  # Add a custom linear model trend line using the equation from `model`
-  geom_abline(
-    intercept = coef(model)[1],
-    slope = coef(model)[2],
-    color = "black", linetype = "dashed", linewidth = 1
-  ) +
-  # annotate(
-  #   "text", x = min(dat$bio_5) , y = 6.9, 
-  #   label = label_text, size = 5, hjust = 0, vjust = 1
-  # ) +
-  labs(
-    x = "Precipitation of Coldest Quarter",
-    y = expression("log LMA " (g/m^2)),
-  ) +
-  theme_bw(base_size = 15) +
-  theme(
-    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
-    panel.grid.major = element_line(color = "grey85"),
-    legend.position = ""
-  ) +
-  ggtitle("")
-#-------------------------
-#-------------------------
-# AI
-model <- phylolm(lma~ai, data=dat, phy=phy,model = "lambda", REML = FALSE)
-coef_model <- coef(model)  # Intercept and slope
-r2 <- summary(model)$r.squared  # R-squared
-p_value <- summary(model)$coefficients[2, 4]  # p-value for the slope
-
-# Create a text label with R² and p-value
-label_text <- paste0(
-  "R² = ", round(r2, 3), 
-  "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
-)
-
-lma_ai_plot <- ggplot(dat, aes(x = ai, y = lma)) +
-  geom_point(aes(color = lma), size = 2, alpha = 0.5) +
-  scale_color_viridis_c(option = "D", end = 0.85) +
-  geom_density_2d(color = "black", linewidth = 0.4) +  # Add contour lines
-  # Add a custom linear model trend line using the equation from `model`
-  geom_abline(
-    intercept = coef(model)[1], 
-    slope = coef(model)[2], 
-    color = "black", linetype = "dashed", linewidth = 1
-  ) +
-  # annotate(
-  #   "text", x = min(dat$ai) , y = 6.9, 
-  #   label = label_text, size = 5, hjust = 0, vjust = 1
-  # ) +
-  labs(
-    x = "Aridity Index",
-    y = expression("log LMA " (g/m^2)),
-  ) +
-  theme_bw(base_size = 15) +
-  theme(
-    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
-    panel.grid.major = element_line(color = "grey85"),
-    legend.position = ""
-  ) +
-  ggtitle("")
-#-------------------------
-#-------------------------
-# S-RAD
-model <- phylolm(lma~srad, data=dat, phy=phy,model = "lambda", REML = FALSE)
-coef_model <- coef(model)  # Intercept and slope
-r2 <- summary(model)$r.squared  # R-squared
-p_value <- summary(model)$coefficients[2, 4]  # p-value for the slope
-
-# Create a text label with R² and p-value
-label_text <- paste0(
-  "R² = ", round(r2, 3), 
-  "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
-)
-
-lma_srad_plot <- ggplot(dat, aes(x = srad, y = lma)) +
-  geom_point(aes(color = lma), size = 2, alpha = 0.5) +
-  scale_color_viridis_c(option = "D", end = 0.85) +
-  geom_density_2d(color = "black", linewidth = 0.4) +  # Add contour lines
-  # Add a custom linear model trend line using the equation from `model`
-  geom_abline(
-    intercept = coef(model)[1], 
-    slope = coef(model)[2], 
-    color = "black", linetype = "dashed", linewidth = 1
-  ) +
-  # annotate(
-  #   "text", x = min(dat$bio_5) , y = 6.9, 
-  #   label = label_text, size = 5, hjust = 0, vjust = 1
-  # ) +
   labs(
     x = "Solar Radiation",
-    y = expression("log LMA " (g/m^2)),
+    y = expression("log LMA " (g/m^2))
   ) +
   theme_bw(base_size = 15) +
   theme(
@@ -442,37 +192,52 @@ lma_srad_plot <- ggplot(dat, aes(x = srad, y = lma)) +
     legend.position = ""
   ) +
   ggtitle("")
-#-------------------------
-#-------------------------
-# Wind
-model <- phylolm(lma~wind, data=dat, phy=phy,model = "lambda", REML = FALSE)
-coef_model <- coef(model)  # Intercept and slope
-r2 <- summary(model)$r.squared  # R-squared
-p_value <- summary(model)$coefficients[2, 4]  # p-value for the slope
 
-# Create a text label with R² and p-value
+#--------------------------
+# BIO4
+tmp <- data.frame(aggregate(cbind(dat$LMA, dat$bio_4), list(dat$filename, dat$genus_species), 
+  function(x) c(mean(x), mean(log(x)))))
+bio4_dat <- data.frame(sp = tmp$Group.2, bio_4 = tmp$V2[,1], lma = log(exp(tmp$V1[,2])*100))
+model <- extended.pgls(
+  lma ~ bio_4,
+  phy = phy,
+  Cov = NULL,
+  species = "sp",
+  delta = 0.001,
+  gamma = c("sample", "equal"),
+  iter = 999,
+  seed = NULL,
+  int.first = FALSE,
+  turbo = FALSE,
+  Parallel = FALSE,
+  verbose = FALSE,
+  data = bio4_dat,
+  print.progress = TRUE
+)
+save(model, file="bio4_extd_ives_model.Rsave")
+
+load(file="bio4_extd_ives_model.Rsave")
+lrtest_bio4 <- anova(model)
+coef_model <- coef(model)
+p_value <- lrtest_bio4$table$`Pr(>F)`[1]
+
+# Create a text label with p-value
 label_text <- paste0(
-  "R² = ", round(r2, 3), 
   "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
 )
 
-lma_wind_plot <- ggplot(dat, aes(x = wind, y = lma)) +
+lma_bio_4_plot <- ggplot(bio4_dat, aes(x = bio_4, y = lma)) +
   geom_point(aes(color = lma), size = 2, alpha = 0.5) +
-  scale_color_viridis_c(option = "D", end = 0.85) +
   geom_density_2d(color = "black", linewidth = 0.4) +  # Add contour lines
-  # Add a custom linear model trend line using the equation from `model`
+  scale_color_viridis_c(option = "D", end = 0.85) +
   geom_abline(
-    intercept = coef(model)[1], 
-    slope = coef(model)[2], 
+    intercept = coef_model[1],
+    slope = coef_model[2],
     color = "black", linetype = "dashed", linewidth = 1
   ) +
-  # annotate(
-  #   "text", x = min(dat$wind) , y = 6.9, 
-  #   label = label_text, size = 5, hjust = 0, vjust = 1
-  # ) +
   labs(
-    x = "Mean Annual Wind speed",
-    y = expression("log LMA " (g/m^2)),
+    x = "Temperature Seasonality",
+    y = expression("log LMA " (g/m^2))
   ) +
   theme_bw(base_size = 15) +
   theme(
@@ -481,37 +246,52 @@ lma_wind_plot <- ggplot(dat, aes(x = wind, y = lma)) +
     legend.position = ""
   ) +
   ggtitle("")
-#-------------------------
-#-------------------------
-# Alt
-model <- phylolm(lma~alt, data=dat, phy=phy,model = "lambda", REML = FALSE)
-coef_model <- coef(model)  # Intercept and slope
-r2 <- summary(model)$r.squared  # R-squared
-p_value <- summary(model)$coefficients[2, 4]  # p-value for the slope
 
-# Create a text label with R² and p-value
+#--------------------------
+# BIO15
+tmp <- data.frame(aggregate(cbind(dat$LMA, dat$bio_15), list(dat$filename, dat$genus_species), 
+  function(x) c(mean(x), mean(log(x)))))
+bio15_dat <- data.frame(sp = tmp$Group.2, bio_15 = tmp$V2[,1], lma = log(exp(tmp$V1[,2])*100))
+model <- extended.pgls(
+  lma ~ bio_15,
+  phy = phy,
+  Cov = NULL,
+  species = "sp",
+  delta = 0.001,
+  gamma = c("sample", "equal"),
+  iter = 999,
+  seed = NULL,
+  int.first = FALSE,
+  turbo = FALSE,
+  Parallel = FALSE,
+  verbose = FALSE,
+  data = bio15_dat,
+  print.progress = TRUE
+)
+save(model, file="bio15_extd_ives_model.Rsave")
+
+load(file="bio15_extd_ives_model.Rsave")
+lrtest_bio15 <- anova(model)
+coef_model <- coef(model)
+p_value <- lrtest_bio15$table$`Pr(>F)`[1]
+
+# Create a text label with p-value
 label_text <- paste0(
-  "R² = ", round(r2, 3), 
   "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
 )
 
-lma_alt_plot <- ggplot(dat, aes(x = alt, y = lma)) +
+lma_bio_15_plot <- ggplot(bio15_dat, aes(x = bio_15, y = lma)) +
   geom_point(aes(color = lma), size = 2, alpha = 0.5) +
-  scale_color_viridis_c(option = "D", end = 0.85) +
   geom_density_2d(color = "black", linewidth = 0.4) +  # Add contour lines
-  # Add a custom linear model trend line using the equation from `model`
+  scale_color_viridis_c(option = "D", end = 0.85) +
   geom_abline(
-    intercept = coef(model)[1], 
-    slope = coef(model)[2], 
+    intercept = coef_model[1],
+    slope = coef_model[2],
     color = "black", linetype = "dashed", linewidth = 1
   ) +
-  # annotate(
-  #   "text", x = min(dat$wind) , y = 6.9, 
-  #   label = label_text, size = 5, hjust = 0, vjust = 1
-  # ) +
   labs(
-    x = "Elevation (m)",
-    y = expression("log LMA " (g/m^2)),
+    x = "Precipitation Seasonality",
+    y = expression("log LMA " (g/m^2))
   ) +
   theme_bw(base_size = 15) +
   theme(
@@ -520,21 +300,125 @@ lma_alt_plot <- ggplot(dat, aes(x = alt, y = lma)) +
     legend.position = ""
   ) +
   ggtitle("")
-#-------------------------
-pdf("FIGURES/plot_for_figure4a.pdf" ,height=12,width=15)
-grid.arrange(lma_bio_2_plot,
-             lma_bio_5_plot,
-             lma_bio_15_plot,
-             lma_bio_18_plot,
-             lma_bio_19_plot,
-             lma_srad_plot,
-             lma_ai_plot, 
-             lma_wind_plot,
-             lma_alt_plot,
-             ncol=3, nrow = 3)
+
+#--------------------------
+# Wind speed
+tmp <- data.frame(aggregate(cbind(dat$LMA, dat$wind), list(dat$filename, dat$genus_species), 
+  function(x) c(mean(x), mean(log(x)))))
+wind_dat <- data.frame(sp = tmp$Group.2, wind = tmp$V2[,1], lma = log(exp(tmp$V1[,2])*100))
+model <- extended.pgls(
+  lma ~ wind,
+  phy = phy,
+  Cov = NULL,
+  species = "sp",
+  delta = 0.001,
+  gamma = c("sample", "equal"),
+  iter = 999,
+  seed = NULL,
+  int.first = FALSE,
+  turbo = FALSE,
+  Parallel = FALSE,
+  verbose = FALSE,
+  data = wind_dat,
+  print.progress = TRUE
+)
+save(model, file="wind_extd_ives_model.Rsave")
+
+load(file="wind_extd_ives_model.Rsave")
+lrtest_wind <- anova(model)
+coef_model <- coef(model)
+p_value <- lrtest_wind$table$`Pr(>F)`[1]
+
+# Create a text label with p-value
+label_text <- paste0(
+  "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
+)
+
+lma_wind_plot <- ggplot(wind_dat, aes(x = wind, y = lma)) +
+  geom_point(aes(color = lma), size = 2, alpha = 0.5) +
+  geom_density_2d(color = "black", linewidth = 0.4) +  # Add contour lines
+  scale_color_viridis_c(option = "D", end = 0.85) +
+  geom_abline(
+    intercept = coef_model[1],
+    slope = coef_model[2],
+    color = "black", linetype = "dashed", linewidth = 1
+  ) +
+  labs(
+    x = "Wind Speed",
+    y = expression("log LMA " (g/m^2))
+  ) +
+  theme_bw(base_size = 15) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
+    panel.grid.major = element_line(color = "grey85"),
+    legend.position = ""
+  ) +
+  ggtitle("")
+
+#--------------------------
+# AI (Aridity Index)
+tmp <- data.frame(aggregate(cbind(dat$LMA, dat$ai), list(dat$filename, dat$genus_species), 
+  function(x) c(mean(x), mean(log(x)))))
+ai_dat <- data.frame(sp = tmp$Group.2, ai = tmp$V2[,1], lma = log(exp(tmp$V1[,2])*100))
+model <- extended.pgls(
+  lma ~ ai,
+  phy = phy,
+  Cov = NULL,
+  species = "sp",
+  delta = 0.001,
+  gamma = c("sample", "equal"),
+  iter = 999,
+  seed = NULL,
+  int.first = FALSE,
+  turbo = FALSE,
+  Parallel = FALSE,
+  verbose = FALSE,
+  data = ai_dat,
+  print.progress = TRUE
+)
+save(model, file="ai_extd_ives_model.Rsave")
+
+load(file="ai_extd_ives_model.Rsave")
+lrtest_ai <- anova(model)
+coef_model <- coef(model)
+p_value <- lrtest_ai$table$`Pr(>F)`[1]
+
+# Create a text label with p-value
+label_text <- paste0(
+  "\n", "p = ", format.pval(p_value, digits = 3, eps = 0.001)
+)
+
+lma_ai_plot <- ggplot(ai_dat, aes(x = ai, y = lma)) +
+  geom_point(aes(color = lma), size = 2, alpha = 0.5) +
+  geom_density_2d(color = "black", linewidth = 0.4) +  # Add contour lines
+  scale_color_viridis_c(option = "D", end = 0.85) +
+  geom_abline(
+    intercept = coef_model[1],
+    slope = coef_model[2],
+    color = "black", linetype = "dashed", linewidth = 1
+  ) +
+  labs(
+    x = "Aridity Index",
+    y = expression("log LMA " (g/m^2))
+  ) +
+  theme_bw(base_size = 15) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
+    panel.grid.major = element_line(color = "grey85"),
+    legend.position = ""
+  ) +
+  ggtitle("")
+
+#------------------------------------
+# Now create the final plot with grid.arrange
+
+pdf("plot_for_figure4a.pdf", height=12, width=15)
+grid.arrange(lma_bio_1_plot,
+  lma_bio_12_plot,
+  lma_srad_plot,
+  lma_bio_4_plot,
+  lma_bio_15_plot,
+  lma_wind_plot,
+  lma_ai_plot,
+  ncol=3, nrow = 3)
 dev.off()
-###
-
-#lma_bio_3_plot
-
-
