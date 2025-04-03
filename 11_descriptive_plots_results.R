@@ -64,7 +64,7 @@ manual_measurements <- merge(manual_measurements,
                 by.x = "filepart1", by.y="sp")
 
 model <- lm(manual_measurements$width_pixels~manual_measurements$pixel_distance)
-#manual_measurements$abs_error <- abs(manual_measurements$width_pixels-manual_measurements$pixel_distance)
+manual_measurements$abs_error <- abs(manual_measurements$width_pixels-manual_measurements$pixel_distance)
 model <- lm(manual_measurements$abs_error~manual_measurements$lma)
 
 coef_model <- coef(model)  # Intercept and slope

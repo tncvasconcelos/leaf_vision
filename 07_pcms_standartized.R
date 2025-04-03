@@ -7,6 +7,7 @@ library(scales)
 library(RColorBrewer)
 library(phytools)
 
+#rm(list=ls())
 #setwd("~/leaf_vision/")
 
 merged_dataset <- read.csv("data/merged_dataset_final.csv")
@@ -151,7 +152,7 @@ library(MuMIn)
 
 # Perform model selection
 model_set <- dredge(full_model, trace = TRUE, rank = "AICc")
-write.csv(round(as.data.frame(model_set),3), file="model_set_standartized.csv")
+write.csv(round(as.data.frame(model_set),3), file="tables/model_set_standartized.csv")
 saveRDS(model_set, file = "models/model_set_07b.rds")
 model_set <- readRDS(file = "models/model_set_07b.rds")
 

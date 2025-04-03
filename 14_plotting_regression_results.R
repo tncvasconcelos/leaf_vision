@@ -25,12 +25,13 @@ importance_values <- sw(model_avg)
 importance_values <- importance_values[coef_data$Term]
 coef_data$importance_values <- importance_values
 
-coef_data$Term <- c("Mean Annual Temperature",
+coef_data$Term <- c(                    "Abs.Latitude",
+  "Mean Annual Temperature",
                              "Mean Annual Precipitation",
                              "Temperature Seasonality",
                              "Solar Radiation",
-                             "Mean Wind Speed",
-                             "Aridity Index")
+                             "Aridity Index",
+                    "Precipitation Seasonality")
 
 colnames(coef_data)[4] <-"p_value"
 colnames(coef_data)[2] <-"Std_Error"

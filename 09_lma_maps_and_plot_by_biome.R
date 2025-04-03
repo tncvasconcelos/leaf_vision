@@ -7,7 +7,7 @@ library(rnaturalearth)
 library(rnaturalearthdata)
 library(dplyr)
 
-setwd("~/leaf_vision/")
+#setwd("~/leaf_vision/")
 #--------------------------------
 # Plotting LMA and density of points
 merged_dataset <- read.csv("data/merged_dataset.csv")
