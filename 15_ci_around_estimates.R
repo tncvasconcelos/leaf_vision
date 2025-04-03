@@ -6,7 +6,7 @@ library(data.table)
 library(ggplot2)
 
 #---------------------------------------
-merged_dataset <- read.csv("data/merged_dataset_final.csv")
+merged_dataset <- read.csv("merged_dataset_final.csv")
 merged_dataset <- subset(merged_dataset, !is.na(merged_dataset$area))
 merged_dataset <- subset(merged_dataset, !is.na(merged_dataset$petiole_width))
 
@@ -245,7 +245,7 @@ ci_widths_long <- data.frame(
 )
 
 p_ci_widths <- ggplot(ci_widths_long, aes(x = source, y = ci_width, fill = source)) +
-  geom_boxplot(alpha = 0.7) +
+  geom_boxplot(width = 0.4, alpha = 0.7) +
   theme_minimal() +
   labs(title = "95% CI Width by Error Source",
     x = "",

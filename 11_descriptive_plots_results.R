@@ -56,8 +56,17 @@ merged_dataset$filename[which.max(merged_dataset$petiole_width)]
 # FIGURE 3
 #-------------------------------
 # gt petiole comparison
+
 manual_measurements <- as.data.frame(fread("data/GT_comparison.csv"))
+load("results/data_subset_for_plots.Rsave")
+manual_measurements <- merge(manual_measurements,
+                dat,
+                by.x = "filepart1", by.y="sp")
+
 model <- lm(manual_measurements$width_pixels~manual_measurements$pixel_distance)
+#manual_measurements$abs_error <- abs(manual_measurements$width_pixels-manual_measurements$pixel_distance)
+model <- lm(manual_measurements$abs_error~manual_measurements$lma)
+
 coef_model <- coef(model)  # Intercept and slope
 r2 <- summary(model)$r.squared  # R-squared
 p_value <- summary(model)$coefficients[2, 4]  # p-value for the slope
@@ -69,7 +78,7 @@ label_text <- paste0(
 )
 
 gt_comparison_scatter_plot <- ggplot(manual_measurements, aes(x = width_pixels, y = pixel_distance)) +
-  geom_point(aes(color = pixel_distance), size = 3, alpha = 0.7) +
+  geom_point(aes(color = lma), size = 3, alpha = 0.7) +
   scale_color_viridis_c(option = "C", end = 0.85) +
   # Add a custom linear model trend line using the equation from `model`
   geom_abline(
