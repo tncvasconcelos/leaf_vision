@@ -25,12 +25,13 @@ importance_values <- sw(model_avg)
 importance_values <- importance_values[coef_data$Term]
 coef_data$importance_values <- importance_values
 
-coef_data$Term <- c(                    "Abs.Latitude",
-  "Mean Annual Temperature",
-                             "Mean Annual Precipitation",
+coef_data$Term <- c("Mean Annual Temperature",
+                       "Mean Annual Precipitation",
                              "Temperature Seasonality",
+                    "Latitude (absolute)",
                              "Solar Radiation",
                              "Aridity Index",
+                    "Wind speed",
                     "Precipitation Seasonality")
 
 colnames(coef_data)[4] <-"p_value"
@@ -85,7 +86,7 @@ importance_plot <- ggplot(coef_data_filtered, aes(x = Term, y = importance_value
   ) +
   coord_flip()  # Flip coordinates to match orientation
 
-pdf("FIGURES/plot_for_figure5.pdf" ,height=4,width=8)
+pdf("plots/plot_for_figure5.pdf" ,height=4,width=8)
 grid.arrange(coef_plot, importance_plot, ncol=2, nrow = 1)
 dev.off()
 

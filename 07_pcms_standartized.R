@@ -11,7 +11,6 @@ library(phytools)
 #setwd("~/leaf_vision/")
 
 merged_dataset <- read.csv("data/merged_dataset_final.csv")
-merged_dataset$abs_lat <- abs(merged_dataset$lat)
 merged_dataset$genus_species <- gsub(" ", "_", merged_dataset$genus_species)
 tre <- read.tree("trees/GBMB.tre")
 
@@ -26,7 +25,7 @@ merged_dataset <- merged_dataset[!duplicated(merged_dataset$filename),]
 merged_dataset_2 <- merged_dataset[,!colnames(merged_dataset) == "super_biome"]
 merged_dataset_2 <- merged_dataset_2[,!colnames(merged_dataset_2) == "deciduousness"]
 merged_dataset_2 <- merged_dataset_2[,!colnames(merged_dataset_2) == "leaf_phenology"]
-focal_cols <- c(which(colnames(merged_dataset_2)=="abs_lat")
+focal_cols <- c(which(colnames(merged_dataset_2)=="lat")
 , grep("bio_1$", colnames(merged_dataset_2)):ncol(merged_dataset_2))
 climate_data <- aggregate(merged_dataset_2[,focal_cols], list(merged_dataset_2$genus_species), 
   FUN = function(x) c(mean(x, na.rm=TRUE), sd(x, na.rm = TRUE)/length(na.omit(x))))
@@ -34,6 +33,7 @@ climate_data <- do.call(cbind, lapply(climate_data, function(x) as.data.frame(x)
 colnames(climate_data) <- gsub("\\.V1", "", colnames(climate_data))
 colnames(climate_data) <- gsub("\\.V2", "_se", colnames(climate_data))
 dat <- cbind(lma_results, climate_data)
+dat$lat <- abs(dat$lat)
 
 missing_sp <- dat$sp[!dat$sp %in% tre$tip.label]
 dat <- dat[dat$sp %in% tre$tip.label, ]
@@ -132,7 +132,7 @@ library(phylolm)
 # cumsum(summary(pca_res)$importance[2, ])
 
 
-reduced_vars <- c("abs_lat", "bio_1" , "bio_12" ,"bio_4","bio_15", "wind", "srad" , "ai")
+reduced_vars <- c("lat", "bio_1" , "bio_12" ,"bio_4","bio_15", "wind", "srad" , "ai")
 
 ## FULL PHYLO REGRESSION
 data_subset <- dat[, c("lma", reduced_vars)]
