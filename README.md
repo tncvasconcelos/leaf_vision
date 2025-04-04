@@ -53,6 +53,12 @@ Downloads herbarium specimen images for a list of target species, prioritizing h
 > 06_post_processing.R  
 Processes Leaf Machine output by cleaning and merging it with petiole width data, calculates LMA, removes outliers, verifies geographic accuracy, and enriches the dataset with biome and environmental variables for further analysis.  
   
+> 07_pcms_standartized.R  
+This script standardizes trait and climate variables, performs phylogenetic linear regressions, and uses model selection and averaging to identify key environmental predictors of LMA variation. 
+
+> 08_r2_comparisons.R
+This script compares phylogenetic and non-phylogenetic models to estimate the explanatory power (R²) of climate predictors on leaf mass per area (LMA). It performs model averaging, fits both linear and phylogenetic linear models using the averaged formula, and calculates multiple R² metrics, including likelihood-based and residual-based values, using the rr2 package.
+
 
 ----
   
