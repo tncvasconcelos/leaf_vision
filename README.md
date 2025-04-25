@@ -71,9 +71,6 @@ Trabucco, A., & Zomer, R. (2018). Global aridity index and potential evapo- tran
   
 **Filtered GBIF points from:**
   
-Dorey, et al. (2023). A globally synthesised and flagged bee occurrence dataset and cleaning workflow. Scientific Data, 10(1), 747.
-
-
 on git ignore (files are too large for the repo):
 - POWO data
 - gbif points from Dorey et al.
