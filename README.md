@@ -62,7 +62,6 @@ Karger, et al. (2017). Climatologies at high resolution for the earth’s land s
 Trabucco, A., & Zomer, R. (2018). Global aridity index and potential evapo- transpiration (ET0) climate database v2. CGIAR Consortium for Spatial Information (CGIAR-CSI). Published online, available from the CGIAR-CSI GeoPortal at https://cgiarcsi.community
   
   
-**Filtered GBIF points from:**
   
 on git ignore (files are too large for the repo):
 - POWO data
