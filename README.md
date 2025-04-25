@@ -52,7 +52,30 @@ This script standardizes trait and climate variables, performs phylogenetic line
 > 08_r2_comparisons.R
 This script compares phylogenetic and non-phylogenetic models to estimate the explanatory power (R²) of climate predictors on leaf mass per area (LMA). It performs model averaging, fits both linear and phylogenetic linear models using the averaged formula, and calculates multiple R² metrics, including likelihood-based and residual-based values, using the rr2 package.
 
-
+> 09_lma_maps_and_plot_by_biome.R
+This script analyzes leaf mass per area (LMA) data by creating global distribution maps and biome-specific violin plots. It aggregates LMA values by filename, then visualizes the global variation in LMA and data point density across 2.5° x 2.5° grid cells. Additionally, it generates violin plots for biomes with at least 100 observations, highlighting the distribution of LMA, sample sizes, and median values within each biome. 
+  
+> 10_lma_vs_error_SI.R
+This script visualizes the relationship between absolute error in petiole width measurement and estimated leaf mass per area (LMA), showing a weak but significant correlation. A linear model fit and color gradient highlight how LMA varies with measurement error.
+  
+> 11_descriptive_plots_results.R
+This script analyzes leaf morphology, focusing on leaf area, petiole width, and LMA. It calculates and visualizes species distribution, generates histograms for key measurements, and compares automated vs. manual petiole width measurements. The results, including histograms and scatter plots, are saved in a PDF for Figure 3.
+  
+> 12_pcm_plots.R
+This script calculates mean environmental variables and fits phylogenetic generalized least squares (PGLS) models to assess the relationship between leaf mass per area (LMA) and each environmental factor. The results, including p-values, are stored and used to annotate scatter plots of LMA against each environmental variable. 
+  
+> 13_ldg_plot.R
+This script processes a dataset to visualize how leaf mass per area (LMA) varies with latitude. It calculates the mean LMA for each 1-degree latitude bin and creates line plots for both mean LMA and the number of observations by latitude. 
+  
+> 14_plotting_regression_results.R
+This script loads a full regression model and a set of candidate models, then performs model averaging using the top models within a 2 AICc unit range. It extracts coefficients and their confidence intervals, filters the results, and then visualizes the effects of different terms in the model. The first plot shows the effect size of each term with confidence intervals, color-coded by the sign of the estimate (positive or negative) and adjusted for statistical significance. The second plot shows the importance values of each term, indicating their relative influence on the model. 
+  
+> 15_ci_around_estimates_SI.R
+This script estimates Leaf Mass per Area (LMA) from petiole width and leaf area using a calibration model and the Royer equation, incorporating error propagation through bootstrap simulations. It generates confidence intervals for each specimen's LMA estimate and quantifies the relative contributions of calibration and model error to overall uncertainty. The script outputs summary statistics and visualizations, including histograms and bar plots of confidence intervals and error source contributions.
+  
+> 16_comparison_with_other_datasets.R
+This script shows geographical areas where species sampled by us, but not in TRY, occur. It identifies regions with missing species-level data and visualizes species and family richness across tropical areas. It highlights data gaps which could guide future sampling efforts. The map generated shows species richness with white areas for regions with zero data.
+  
 ----
   
 **Climate layers from:**
