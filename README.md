@@ -8,27 +8,6 @@ Description of folders:
  
 - **data/** 
 
-Includes table with the studies and community data included in the analyses, as well as a table with studies that had to be removed from the analyses (among other reasons for not presenting number of species with bee flowers)
-
-- **files_for_maps/** 
-
-Some files used as a reference for plotting maps.
-
-- **plots/** 
-
-A folder to organize plots for visual inspection of data and results. 
-
-- **spatial_regression_results/**
-
-Some results from correlation analyses.
-
-- **TWDG/**
-
- 
-- **WWF_ecoregions/** 
-
-
-- **results/** 
 
   
 
