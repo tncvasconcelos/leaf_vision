@@ -31,6 +31,7 @@ phy$node.label <- NULL
 tmp <- data.frame(aggregate(cbind(dat$LMA, dat$bio_1), list(dat$filename, dat$genus_species), 
                             function(x) c(mean(x), mean(log(x)))))
 bio1_dat <- data.frame(sp = tmp$Group.2, bio_1 = tmp$V2[,1], lma = log(exp(tmp$V1[,2])*100))
+
 model <- extended.pgls(
   lma ~ bio1,
   phy = phy,

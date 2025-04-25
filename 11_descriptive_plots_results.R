@@ -7,6 +7,30 @@ library(ggplot2)
 
 #---------------------------------------
 merged_dataset <- read.csv("data/merged_dataset_final.csv")
+mean(table(merged_dataset$genus_species))
+
+library(ggplot2)
+
+
+# Count number of observations per species
+species_counts <- as.data.frame(table(merged_dataset$genus_species))
+colnames(species_counts) <- c("genus_species", "count")
+
+# Calculate median count
+median_count <- median(species_counts$count)
+
+# Plot
+ggplot(species_counts, aes(x = reorder(genus_species, -count), y = count)) +
+  geom_bar(stat = "identity", fill = "darkolivegreen4") +
+  geom_hline(yintercept = median_count, linetype = "dashed", color = "red") +
+  labs(x = NULL, y = "Count") +
+  theme_classic() +  # white background
+  theme(
+    axis.text.x = element_blank(),  # remove species names
+    axis.ticks.x = element_blank()
+  )
+
+
 merged_dataset <- subset(merged_dataset, !is.na(merged_dataset$area))
 merged_dataset <- subset(merged_dataset, !is.na(merged_dataset$petiole_width))
 
@@ -58,14 +82,8 @@ merged_dataset$filename[which.max(merged_dataset$petiole_width)]
 # gt petiole comparison
 
 manual_measurements <- as.data.frame(fread("data/GT_comparison.csv"))
-load("results/data_subset_for_plots.Rsave")
-manual_measurements <- merge(manual_measurements,
-                dat,
-                by.x = "filepart1", by.y="sp")
 
 model <- lm(manual_measurements$width_pixels~manual_measurements$pixel_distance)
-manual_measurements$abs_error <- abs(manual_measurements$width_pixels-manual_measurements$pixel_distance)
-model <- lm(manual_measurements$abs_error~manual_measurements$lma)
 
 coef_model <- coef(model)  # Intercept and slope
 r2 <- summary(model)$r.squared  # R-squared
@@ -78,7 +96,7 @@ label_text <- paste0(
 )
 
 gt_comparison_scatter_plot <- ggplot(manual_measurements, aes(x = width_pixels, y = pixel_distance)) +
-  geom_point(aes(color = lma), size = 3, alpha = 0.7) +
+  geom_point(aes(color = pixel_distance), size = 3, alpha = 0.7) +
   scale_color_viridis_c(option = "C", end = 0.85) +
   # Add a custom linear model trend line using the equation from `model`
   geom_abline(
@@ -107,116 +125,6 @@ gt_comparison_scatter_plot <- ggplot(manual_measurements, aes(x = width_pixels, 
   ) +
   ggtitle("")
 
-
-#-------------------------------
-# FIGURE BOOTSTRAP
-#-------------------------------
-# Function to create confidence intervals for individual LMA estimates
-calculate_individual_lma_with_ci <- function(specimen_data, n_simulations = 1000) {
-  # Initialize storage for simulated LMA values
-  lma_simulations <- numeric(n_simulations)
-  
-  for(i in 1:n_simulations) {
-    # Step 1: Apply calibration model with error
-    calibrated_width <- coef_model[1] + coef_model[2] * specimen_data$width_pixels
-    prediction_error_sd <- sqrt(mean(residuals(model)^2))
-    calibrated_width <- calibrated_width + rnorm(1, 0, prediction_error_sd)
-    
-    # Convert from pixels to meters
-    converted_width <- calibrated_width / specimen_data$conversion_mean
-    
-    # Step 2: Apply Royer equation
-    base_lma <- make_LMA(specimen_data$area, converted_width)
-    log_lma <- log(base_lma)
-    
-    # Add error from Royer equation (R² = 0.55)
-    variance_explained <- 0.55
-    # Standard error of the Royer regression (can be approximated)
-    # Using the coefficient from Royer equation
-    se_royer <- 0.382 * sqrt((1 - variance_explained) / variance_explained)  
-    
-    # Add error in log space and convert back
-    lma_simulations[i] <- exp(log_lma + rnorm(1, 0, se_royer))
-  }
-  
-  # Calculate point estimate and confidence interval
-  point_estimate <- make_LMA(
-    specimen_data$area, 
-    (coef_model[1] + coef_model[2] * specimen_data$width_pixels) / specimen_data$conversion_mean
-  )
-  
-  ci_lower <- quantile(lma_simulations, 0.025)
-  ci_upper <- quantile(lma_simulations, 0.975)
-  
-  return(list(
-    estimate = point_estimate,
-    lower_ci = ci_lower,
-    upper_ci = ci_upper,
-    simulations = lma_simulations
-  ))
-}
-
-make_LMA <- function(leaf_area, petiole_width) {
-  LMA = 3.07 + 0.382 * log(petiole_width^2 / leaf_area)
-  return(exp(LMA))
-}
-
-library(parallel)
-# Apply to all specimens in your dataset
-results_list <- mclapply(1:nrow(merged_dataset), function(i) {
-  # Skip rows with conversion_mean of 0
-  if(merged_dataset$conversion_mean[i] == 0) {
-    return(list(
-      estimate = NA,
-      lower_ci = NA,
-      upper_ci = NA,
-      simulations = NA
-    ))
-  }
-  
-  calculate_individual_lma_with_ci(merged_dataset[i,])
-}, mc.cores = 10)
-
-# Extract results into a data frame
-output <- data.frame(
-  specimen_id = merged_dataset$component_name, 
-  lma_estimate = sapply(results_list, function(x) x$estimate),
-  lma_lower_ci = sapply(results_list, function(x) x$lower_ci),
-  lma_upper_ci = sapply(results_list, function(x) x$upper_ci)
-)
-
-# Filter out any rows with NAs (from rows with conversion_mean = 0)
-output <- output[!is.na(output$lma_estimate),]
-
-# Print some summary statistics
-cat("Mean LMA across all specimens:", mean(output$lma_estimate), "g/m²\n")
-cat("Mean CI width:", mean(output$lma_upper_ci - output$lma_lower_ci), "g/m²\n")
-
-# Create histogram of LMA estimates with error bars
-library(ggplot2)
-# Sort by LMA value for better visualization
-output_sorted <- output[order(output$lma_estimate, decreasing = TRUE),]
-output_sorted$order <- 1:nrow(output_sorted)
-
-# Create the plot with semi-transparent error bars
-ggplot(output_sorted, aes(x = order, y = lma_estimate)) +
-  # Add a background grid only for the y-axis for better readability
-  theme_minimal() +
-  theme(
-    panel.grid.major.x = element_blank(),
-    panel.grid.minor.x = element_blank()
-  ) +
-  # Add the error bars first (so points appear on top)
-  geom_errorbar(aes(ymin = lma_lower_ci, ymax = lma_upper_ci), 
-    width = 0.2, 
-    color = "steelblue",  # Less intense blue
-    alpha = 0.5) +
-  # Add points last so they're on top
-  geom_point(size = 1, color = "darkblue") +
-  # Improve labels
-  labs(title = "LMA Estimates with 95% Confidence Intervals",
-    x = "Specimens (ordered by LMA)", 
-    y = "LMA (g/m²)")
 
 #---------------------------------------
 merged_dataset <- read.csv("data/merged_dataset_final.csv")

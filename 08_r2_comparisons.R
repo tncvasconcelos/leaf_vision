@@ -54,4 +54,3 @@ R2_lik(avg_model_lm)
 
 
 
-

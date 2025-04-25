@@ -6,7 +6,8 @@ library(data.table)
 library(ggplot2)
 
 #---------------------------------------
-merged_dataset <- read.csv("merged_dataset_final.csv")
+merged_dataset <- read.csv("data/merged_dataset_final.csv")
+#merged_dataset$LMA <- merged_dataset$LMA*100
 merged_dataset <- subset(merged_dataset, !is.na(merged_dataset$area))
 merged_dataset <- subset(merged_dataset, !is.na(merged_dataset$petiole_width))
 
@@ -61,15 +62,15 @@ calculate_individual_lma_with_ci <- function(specimen_data, n_simulations = 1000
 
 make_LMA <- function(leaf_area, petiole_width) {
   LMA = 3.07 + 0.382 * log(petiole_width^2 / leaf_area)
-  return(exp(LMA))
+  return(exp(LMA)*100)
 }
 
 library(parallel)
-# Add error from Royer equation (R² = 0.55)
+# Add error from Royer equation (R2 = 0.55)
 variance_explained <- 0.55
 sd_royer <- sqrt(var(log(merged_dataset$LMA)) * (1 - variance_explained))
 
-# Apply to all specimens in your dataset
+# Apply to all specimens in dataset
 results_list <- mclapply(1:nrow(merged_dataset), function(i) {
   # Skip rows with conversion_mean of 0
   if(merged_dataset$conversion_mean[i] == 0) {
@@ -82,9 +83,10 @@ results_list <- mclapply(1:nrow(merged_dataset), function(i) {
   }
   
   calculate_individual_lma_with_ci(merged_dataset[i,])
-}, mc.cores = 4)
+}, mc.cores = 7)
 
-# saveRDS(results_list, file = "intermediate_datasets/ci_results_list.RDS")
+
+#saveRDS(results_list, file = "ci_results_list.RDS")
 results_list <- readRDS("ci_results_list.RDS")
 
 # Extract results into a data frame
@@ -97,6 +99,9 @@ output <- data.frame(
 
 # Filter out any rows with NAs (from rows with conversion_mean = 0)
 output <- output[!is.na(output$lma_estimate),]
+output <- output[-grep(gsub("__.*", "", output$specimen_id[which.max(output$lma_estimate)]), output$specimen_id),]
+
+#plot(sort((output$lma_estimate), decreasing = TRUE)[1:100])
 
 # Print some summary statistics
 cat("Mean LMA across all specimens:", mean(output$lma_estimate), "g/m²\n")
@@ -148,16 +153,17 @@ analyze_uncertainty_sources <- function(specimen_data, n_simulations = 1000) {
     prediction_error_sd <- sqrt(mean(residuals(model)^2))
     width_with_error <- width_base + rnorm(1, 0, prediction_error_sd)
     width_converted_with_error <- width_with_error / specimen_data$conversion_mean
+    royer_error <- rnorm(1, 0, sd_royer)
+    lma_i <- make_LMA(specimen_data$area, width_converted_with_error)
     
     # Scenario 1: Both errors
-    lma_full_error[i] <- exp(log(make_LMA(specimen_data$area, width_converted_with_error)) + 
-        rnorm(1, 0, sd_royer))
+    lma_full_error[i] <- exp(log(lma_i) + royer_error)
     
     # Scenario 2: Width error only
-    lma_width_error_only[i] <- make_LMA(specimen_data$area, width_converted_with_error)
+    lma_width_error_only[i] <- lma_i
     
     # Scenario 3: Royer error only
-    lma_royer_error_only[i] <- exp(log_lma_base + rnorm(1, 0, sd_royer))
+    lma_royer_error_only[i] <- exp(log_lma_base + royer_error)
   }
   
   # Calculate variances for each scenario
@@ -171,8 +177,8 @@ analyze_uncertainty_sources <- function(specimen_data, n_simulations = 1000) {
   ci_width_royer_only <- quantile(lma_royer_error_only, 0.975) - quantile(lma_royer_error_only, 0.025)
   
   # Calculate proportion of variance contributed by each source
-  prop_width <- var_width / var_full
-  prop_royer <- var_royer / var_full
+  prop_width <- var_width / (var_width + var_royer)
+  prop_royer <- var_royer / (var_width + var_royer)
   
   # Return results
   return(list(
@@ -189,8 +195,9 @@ analyze_uncertainty_sources <- function(specimen_data, n_simulations = 1000) {
 }
 
 # Apply to a sample of specimens (or all of them)
-sample_size <- min(20, nrow(merged_dataset))
+sample_size <- min(100, nrow(merged_dataset))
 sample_indices <- sample(which(merged_dataset$conversion_mean > 0), sample_size)
+#sample_indices <- 1:nrow(merged_dataset)
 
 uncertainty_results <- lapply(sample_indices, function(i) {
   analyze_uncertainty_sources(merged_dataset[i,])
@@ -250,7 +257,7 @@ p_ci_widths <- ggplot(ci_widths_long, aes(x = source, y = ci_width, fill = sourc
   labs(title = "95% CI Width by Error Source",
     x = "",
     y = "Confidence Interval Width (g/m²)") +
-  scale_fill_brewer(palette = "Set1")
+  scale_fill_brewer(palette = "Set2")
 
 # Display plots
 #print(p_contributions)
