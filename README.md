@@ -7,8 +7,22 @@ Authors: Thais Vasconcelos, Will Weaver, Aly Baumgartner, Zoe Bugnaski, James Bo
 Description of folders: 
  
 - **data/** 
+ This folder contains .csv files with measurements of petiole width obtained through both manual methods and computer vision, as well as leaf area measurements generated using LeafMachine 2. 
 
+- **models/** 
+  This folder contains output files from multimodal inference analyses conducted using both standardized and non-standardized variables.
 
+- **plots/** 
+  This folder contains plots generated from data analyses, many of which are included as figures in the manuscript.
+
+- **supporting_datasets/** 
+  This folder includes .csv files with supporting information such as the list of sampled species, life form classifications, a list of plant families excluded from analyses (non-woody dicots among seed plants), and the finalized list of woody dicot species used in the study.
+
+- **tables/** 
+   This folder contains .csv files summarizing results from multimodal inference analyses, along with other tabulated outputs used for reporting and interpretation.
+
+- **trees/** 
+  This folder contains phylogenetic trees used in the analyses, provided in formats compatible with downstream comparative methods.  
   
 
 ----
